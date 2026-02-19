@@ -5,14 +5,22 @@ export default function Home() {
 	return (
 		<main className="flex flex-col items-center pt-8 min-h-screen">
 					<div className="flex w-screen gap-4 px-8 justify-center">
-						<div className="w-[48%] bg-white rounded-xl shadow p-8 flex flex-col justify-center items-center min-h-[200px] border border-zinc-200">
-							<h2 className="text-xl font-semibold mb-2">Card 1</h2>
-							<p className="text-zinc-600">Content for the first card.</p>
-						</div>
-						<div className="w-[48%] bg-white rounded-xl shadow p-8 flex flex-col justify-center items-center min-h-[200px] border border-zinc-200">
-							<h2 className="text-xl font-semibold mb-2">Card 2</h2>
-							<p className="text-zinc-600">Content for the second card.</p>
-						</div>
+								<div className="w-[48%] bg-white rounded-xl shadow p-8 flex flex-col justify-center items-center min-h-[200px] border border-zinc-200">
+															<div className="flex items-end gap-2 mb-4">
+																<h2 className="text-4xl font-bold">ETO:</h2>
+																<span className="text-4xl font-extrabold text-black">120</span>
+																<span className="text-2xl text-zinc-600 font-medium">hours</span>
+															</div>
+												<div className="text-zinc-500 text-sm">Last logged: 2026-02-15</div>
+								</div>
+								<div className="w-[48%] bg-white rounded-xl shadow p-8 flex flex-col justify-center items-center min-h-[200px] border border-zinc-200">
+									<div className="flex items-end gap-2 mb-4">
+										<h2 className="text-4xl font-bold">CTO:</h2>
+										<span className="text-4xl font-extrabold text-black">80</span>
+										<span className="text-2xl text-zinc-600 font-medium">hours</span>
+									</div>
+									<div className="text-zinc-500 text-sm">Last logged: 2026-02-10</div>
+								</div>
 					</div>
 
 			{/* Calendar below the cards */}
