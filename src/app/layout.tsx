@@ -14,11 +14,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <nav className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black">
-          <div className="text-lg font-bold text-zinc-900 dark:text-zinc-100">BCWS Time Tracker</div>
+        <nav className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 bg-white">
+          <div className="text-lg font-bold text-zinc-900">BCWS Time Tracker</div>
           <div className="flex gap-6">
-            <a href="#" className="text-zinc-700 dark:text-zinc-200 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Crew</a>
-            <a href="#" className="text-zinc-700 dark:text-zinc-200 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Profile</a>
+            <a href="#" className="text-zinc-700 hover:text-blue-600 font-medium">Crew</a>
+            <a href="#" className="text-zinc-700 hover:text-blue-600 font-medium">Profile</a>
           </div>
         </nav>
         {children}
