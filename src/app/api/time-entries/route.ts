@@ -13,5 +13,6 @@ export async function GET(request: Request) {
       deletedAt: null,
     },
   });
+  
   return NextResponse.json({ entries });
 }

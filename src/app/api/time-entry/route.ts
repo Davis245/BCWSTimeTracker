@@ -10,7 +10,11 @@ const timeEntrySchema = z.object({
   ),
   type: z.enum(["ETO", "CTO"]),
   direction: z.enum(["EARNED", "USED"]),
-  hours: z.number().positive("Hours must be positive"),
+  // accept numbers or numeric strings (coerce to number)
+  hours: z.preprocess((val) => {
+    if (typeof val === "string" && val.trim() !== "") return Number(val);
+    return val;
+  }, z.number().min(0, "Hours must be non-negative")),
   notes: z.string().optional(),
 });
 
@@ -22,7 +26,7 @@ export async function POST(request: Request) {
     }
     let body;
     try {
-      body = await request.json();
+  body = await request.json();
     } catch {
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }

@@ -8,15 +8,23 @@ export async function createTimeEntry({ userId, date, type, direction, hours, no
   hours: number;
   notes?: string;
 }) {
-  return prisma.timeEntry.create({
-    data: {
-      userId,
-      date,
-      type,
-      direction,
-      hours,
-      notes,
-      deletedAt: null,
-    },
-  });
+  // (previously had debug logging here)
+  try {
+    const created = await prisma.timeEntry.create({
+      data: {
+        userId,
+        date,
+        type,
+        direction,
+        hours,
+        notes,
+        deletedAt: null,
+      },
+    });
+  // creation succeeded
+    return created;
+  } catch (err) {
+    console.error("[timeEntry.service] prisma.create error:", err);
+    throw err;
+  }
 }

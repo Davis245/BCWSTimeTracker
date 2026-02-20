@@ -16,7 +16,7 @@ type TimeEntry = {
   deletedAt?: string | null;
 };
 
-type DayTotals = Record<string, { ETO: number; CTO: number }>;
+type DayTotals = Record<string, { ETO: number; CTO: number; hasEto?: boolean; hasCto?: boolean }>;
 
 
 const MONTH_NAMES = [
@@ -75,10 +75,16 @@ export default function Calendar() {
       if (d.getFullYear() !== year || d.getMonth() !== month) continue;
       const day = d.getDate();
       const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-      if (!totals[key]) totals[key] = { ETO: 0, CTO: 0 };
+      if (!totals[key]) totals[key] = { ETO: 0, CTO: 0, hasEto: false, hasCto: false };
       const sign = entry.direction === "EARNED" ? 1 : -1;
-      if (entry.type === "ETO") totals[key].ETO += sign * entry.hours;
-      if (entry.type === "CTO") totals[key].CTO += sign * entry.hours;
+      if (entry.type === "ETO") {
+        totals[key].ETO += sign * entry.hours;
+        totals[key].hasEto = true;
+      }
+      if (entry.type === "CTO") {
+        totals[key].CTO += sign * entry.hours;
+        totals[key].hasCto = true;
+      }
     }
     setDayTotals(totals);
   }, [entries, year, month]);
@@ -128,39 +134,50 @@ export default function Calendar() {
     const date = new Date(year, month, editDay).toISOString(); // Full ISO-8601 string
     const requests = [];
     // ETO
-    if (editEto && !isNaN(Number(editEto)) && Number(editEto) !== 0) {
+    if (editEto !== "" && !isNaN(Number(editEto))) {
       const etoNum = Number(editEto);
+      const payload = {
+        date,
+        type: "ETO",
+        direction: etoNum >= 0 ? "EARNED" : "USED",
+        hours: Math.abs(etoNum),
+      };
+      
       requests.push(
         fetch("/api/time-entry", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            date,
-            type: "ETO",
-            direction: etoNum > 0 ? "EARNED" : "USED",
-            hours: Math.abs(etoNum),
-          }),
+          body: JSON.stringify(payload),
         })
       );
     }
     // CTO
-    if (editCto && !isNaN(Number(editCto)) && Number(editCto) !== 0) {
+    if (editCto !== "" && !isNaN(Number(editCto))) {
       const ctoNum = Number(editCto);
+      const payload = {
+        date,
+        type: "CTO",
+        direction: ctoNum >= 0 ? "EARNED" : "USED",
+        hours: Math.abs(ctoNum),
+      };
+      
       requests.push(
         fetch("/api/time-entry", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            date,
-            type: "CTO",
-            direction: ctoNum > 0 ? "EARNED" : "USED",
-            hours: Math.abs(ctoNum),
-          }),
+          body: JSON.stringify(payload),
         })
       );
     }
     try {
-      await Promise.all(requests);
+      const responses = await Promise.all(requests);
+      const statuses = responses.map((r) => r.status);
+      
+      // attempt to parse json bodies for errors
+      const bodies = await Promise.all(responses.map(async (r) => {
+        try { return await r.json(); } catch { return null; }
+      }));
+      
       // notify others that data changed
       try {
         triggerRefresh();
@@ -168,7 +185,7 @@ export default function Calendar() {
         // ignore if context not available
       }
     } catch (e) {
-      // Optionally show error
+      console.error("[calendar] error saving entries:", e);
     }
     closeModal();
   }
@@ -293,6 +310,8 @@ export default function Calendar() {
           const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
           const etoVal = dayTotals[key]?.ETO ?? 0;
           const ctoVal = dayTotals[key]?.CTO ?? 0;
+          const hasEto = !!dayTotals[key]?.hasEto;
+          const hasCto = !!dayTotals[key]?.hasCto;
           return (
             <div
               key={day}
@@ -335,8 +354,8 @@ export default function Calendar() {
                   }}
                 >
                   <div style={{ fontSize: 10, fontWeight: 600, color: "#0f172a", letterSpacing: 1 }}>ETO</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
-                    {etoVal !== 0 ? etoVal : "--"}
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
+                    {hasEto ? etoVal : "--"}
                   </div>
                 </div>
                 <div
@@ -358,7 +377,7 @@ export default function Calendar() {
                 >
                   <div style={{ fontSize: 10, fontWeight: 600, color: "#0f172a", letterSpacing: 1 }}>CTO</div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
-                    {ctoVal !== 0 ? ctoVal : "--"}
+                    {hasCto ? ctoVal : "--"}
                   </div>
                 </div>
               </div>
