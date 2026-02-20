@@ -1,5 +1,6 @@
 
-import EventsCalendar from "@/components/EventsCalendar";
+
+import Calendar from "@/components/calendar";
 
 export default function Home() {
 	return (
@@ -26,7 +27,7 @@ export default function Home() {
 
 			{/* Calendar below the cards */}
 			<div className="mt-12 w-full flex justify-center">
-				<EventsCalendar />
+				<Calendar />
 			</div>
 		</main>
 	);
