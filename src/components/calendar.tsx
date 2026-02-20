@@ -3,6 +3,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTimeEntryRefresh } from "./TimeEntryRefreshContext";
 
 type TimeEntry = {
   id: string;
@@ -52,6 +53,8 @@ export default function Calendar() {
   const [editCto, setEditCto] = useState("");
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [dayTotals, setDayTotals] = useState<DayTotals>({});
+  const { refreshKey } = useTimeEntryRefresh();
+  const { triggerRefresh } = useTimeEntryRefresh();
 
   // Fetch entries for the current month
   useEffect(() => {
@@ -62,7 +65,7 @@ export default function Calendar() {
       setEntries(data.entries || []);
     }
     fetchEntries();
-  }, [year, month]);
+  }, [year, month, refreshKey]);
 
   // Aggregate per day for this month
   useEffect(() => {
@@ -158,6 +161,12 @@ export default function Calendar() {
     }
     try {
       await Promise.all(requests);
+      // notify others that data changed
+      try {
+        triggerRefresh();
+      } catch (_) {
+        // ignore if context not available
+      }
     } catch (e) {
       // Optionally show error
     }

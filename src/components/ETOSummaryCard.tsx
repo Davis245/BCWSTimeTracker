@@ -1,11 +1,13 @@
 
 "use client";
 import { useEffect, useState } from "react";
+import { useTimeEntryRefresh } from "./TimeEntryRefreshContext";
 
 const ETOSummaryCard: React.FC = () => {
   const [etoTotal, setEtoTotal] = useState<number | string>("--");
   const [etoLast, setEtoLast] = useState<string | undefined>(undefined);
 
+  const { refreshKey } = useTimeEntryRefresh();
   useEffect(() => {
     async function fetchETO() {
       const res = await fetch("/api/time-entries");
@@ -26,7 +28,7 @@ const ETOSummaryCard: React.FC = () => {
       setEtoLast(etoLastDate ? new Date(etoLastDate).toLocaleDateString() : undefined);
     }
     fetchETO();
-  }, []);
+  }, [refreshKey]);
 
   return (
     <div className="w-[48%] bg-white rounded-xl shadow p-8 flex flex-col justify-center items-center min-h-[200px] border border-zinc-200">

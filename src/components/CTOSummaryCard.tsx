@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTimeEntryRefresh } from "./TimeEntryRefreshContext";
 
 const CTOSummaryCard: React.FC = () => {
   const [ctoTotal, setCtoTotal] = useState<number | string>("--");
   const [ctoLast, setCtoLast] = useState<string | undefined>(undefined);
+  const { refreshKey } = useTimeEntryRefresh();
 
   useEffect(() => {
     async function fetchCTO() {
@@ -26,7 +28,7 @@ const CTOSummaryCard: React.FC = () => {
       setCtoLast(ctoLastDate ? new Date(ctoLastDate).toLocaleDateString() : undefined);
     }
     fetchCTO();
-  }, []);
+  }, [refreshKey]);
 
   return (
     <div className="w-[48%] bg-white rounded-xl shadow p-8 flex flex-col justify-center items-center min-h-[200px] border border-zinc-200">
