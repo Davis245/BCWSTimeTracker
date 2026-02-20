@@ -28,6 +28,7 @@ model User {
   firstName  String
   lastName   String
   email      String?  @unique
+  hashedPassword String?
   position   String?
 
   crewId     String
