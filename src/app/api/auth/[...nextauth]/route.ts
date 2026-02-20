@@ -38,6 +38,23 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
+    async signIn({ user }) {
+      // Ensure domain User exists for this auth user (by email)
+      if (!user?.email) return false;
+      const existing = await prisma.user.findUnique({ where: { email: user.email } });
+      if (!existing) {
+        // Create a new User with minimal info (fill in more as needed)
+        await prisma.user.create({
+          data: {
+            email: user.email,
+            firstName: user.name?.split(" ")[0] || "",
+            lastName: user.name?.split(" ").slice(1).join(" ") || "",
+            crew: { connectOrCreate: { where: { name: "Unassigned" }, create: { name: "Unassigned" } } },
+          },
+        });
+      }
+      return true;
+    },
   },
 };
 
