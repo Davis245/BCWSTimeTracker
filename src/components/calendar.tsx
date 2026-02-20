@@ -78,8 +78,47 @@ export default function Calendar() {
     setEditCto("");
   }
 
-  function handleSave() {
-    // Save logic will go here (API call, etc.)
+  async function handleSave() {
+    if (editDay == null) return;
+    const date = new Date(year, month, editDay).toISOString(); // Full ISO-8601 string
+    const requests = [];
+    // ETO
+    if (editEto && !isNaN(Number(editEto)) && Number(editEto) !== 0) {
+      const etoNum = Number(editEto);
+      requests.push(
+        fetch("/api/time-entry", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            date,
+            type: "ETO",
+            direction: etoNum > 0 ? "EARNED" : "USED",
+            hours: Math.abs(etoNum),
+          }),
+        })
+      );
+    }
+    // CTO
+    if (editCto && !isNaN(Number(editCto)) && Number(editCto) !== 0) {
+      const ctoNum = Number(editCto);
+      requests.push(
+        fetch("/api/time-entry", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            date,
+            type: "CTO",
+            direction: ctoNum > 0 ? "EARNED" : "USED",
+            hours: Math.abs(ctoNum),
+          }),
+        })
+      );
+    }
+    try {
+      await Promise.all(requests);
+    } catch (e) {
+      // Optionally show error
+    }
     closeModal();
   }
 
