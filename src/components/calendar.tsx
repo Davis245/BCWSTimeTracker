@@ -130,6 +130,10 @@ export default function Calendar() {
                 ...cellStyle,
                 backgroundColor: isToday(day) ? "#e0e7ef" : "#fff",
                 border: "1px solid #e5e7eb",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+                height: "100%",
               }}
             >
               <span
@@ -141,6 +145,45 @@ export default function Calendar() {
               >
                 {day}
               </span>
+              {/* ETO/CTO cards */}
+              <div style={{ display: "flex", gap: 4, marginTop: 4, width: "100%" }}>
+                <div style={{ flex: 1, background: "#f1f5f9", borderRadius: 6, padding: "2px 0", textAlign: "center", marginRight: 2, border: "1px solid #e5e7eb" }}>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: "#0f172a", letterSpacing: 1 }}>ETO</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>--</div>
+                </div>
+                <div style={{ flex: 1, background: "#f1f5f9", borderRadius: 6, padding: "2px 0", textAlign: "center", marginLeft: 2, border: "1px solid #e5e7eb" }}>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: "#0f172a", letterSpacing: 1 }}>CTO</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>--</div>
+                </div>
+              </div>
+              {/* Spacer to push button to bottom */}
+              <div style={{ flex: 1 }} />
+              {/* Edit button at bottom */}
+              <button
+                style={{
+                  marginTop: "auto",
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "#f3f4f6",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 6,
+                  padding: "4px 0",
+                  cursor: "pointer",
+                  color: "#64748b",
+                  fontSize: 14,
+                  fontWeight: 500,
+                  gap: 6,
+                  outline: "none"
+                }}
+                aria-label="Edit day"
+              >
+                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ marginRight: 4 }}>
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                </svg>
+              </button>
             </div>
           );
         })}
