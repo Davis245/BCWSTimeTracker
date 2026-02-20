@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { auth } from "./lib/auth";
 
-export async function middleware(request: any) {
+export async function proxy(request: any) {
   const publicPaths = ["/login", "/register", "/landing", "/api/auth"];
   if (publicPaths.some((p) => request.nextUrl.pathname.startsWith(p))) {
     return NextResponse.next();
