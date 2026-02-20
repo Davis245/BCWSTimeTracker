@@ -4,6 +4,19 @@
 
 import { useState, useEffect, useCallback } from "react";
 
+type TimeEntry = {
+  id: string;
+  userId: string;
+  date: string;
+  type: "ETO" | "CTO";
+  direction: "EARNED" | "USED";
+  hours: number;
+  notes?: string;
+  deletedAt?: string | null;
+};
+
+type DayTotals = Record<string, { ETO: number; CTO: number }>;
+
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -37,6 +50,35 @@ export default function Calendar() {
   const [editDay, setEditDay] = useState<number | null>(null);
   const [editEto, setEditEto] = useState("");
   const [editCto, setEditCto] = useState("");
+  const [entries, setEntries] = useState<TimeEntry[]>([]);
+  const [dayTotals, setDayTotals] = useState<DayTotals>({});
+
+  // Fetch entries for the current month
+  useEffect(() => {
+    async function fetchEntries() {
+      const res = await fetch("/api/time-entries");
+      if (!res.ok) return;
+      const data = await res.json();
+      setEntries(data.entries || []);
+    }
+    fetchEntries();
+  }, [year, month]);
+
+  // Aggregate per day for this month
+  useEffect(() => {
+    const totals: DayTotals = {};
+    for (const entry of entries) {
+      const d = new Date(entry.date);
+      if (d.getFullYear() !== year || d.getMonth() !== month) continue;
+      const day = d.getDate();
+      const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      if (!totals[key]) totals[key] = { ETO: 0, CTO: 0 };
+      const sign = entry.direction === "EARNED" ? 1 : -1;
+      if (entry.type === "ETO") totals[key].ETO += sign * entry.hours;
+      if (entry.type === "CTO") totals[key].CTO += sign * entry.hours;
+    }
+    setDayTotals(totals);
+  }, [entries, year, month]);
 
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfWeek(year, month);
@@ -239,6 +281,9 @@ export default function Calendar() {
         {/* Day cells */}
         {Array.from({ length: daysInMonth }).map((_, i) => {
           const day = i + 1;
+          const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          const etoVal = dayTotals[key]?.ETO ?? 0;
+          const ctoVal = dayTotals[key]?.CTO ?? 0;
           return (
             <div
               key={day}
@@ -263,13 +308,49 @@ export default function Calendar() {
               </span>
               {/* ETO/CTO cards */}
               <div style={{ display: "flex", gap: 4, marginTop: 4, width: "100%" }}>
-                <div style={{ flex: 1, background: "#f1f5f9", borderRadius: 6, padding: "2px 0", textAlign: "center", marginRight: 2, border: "1px solid #e5e7eb" }}>
+                <div
+                  style={{
+                    flex: 1,
+                    background:
+                      etoVal > 0
+                        ? "#bbf7d0" // green-200
+                        : etoVal < 0
+                        ? "#fecaca" // red-200
+                        : "#f1f5f9",
+                    borderRadius: 6,
+                    padding: "2px 0",
+                    textAlign: "center",
+                    marginRight: 2,
+                    border: "1px solid #e5e7eb",
+                    transition: "background 0.2s"
+                  }}
+                >
                   <div style={{ fontSize: 10, fontWeight: 600, color: "#0f172a", letterSpacing: 1 }}>ETO</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>--</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
+                    {etoVal !== 0 ? etoVal : "--"}
+                  </div>
                 </div>
-                <div style={{ flex: 1, background: "#f1f5f9", borderRadius: 6, padding: "2px 0", textAlign: "center", marginLeft: 2, border: "1px solid #e5e7eb" }}>
+                <div
+                  style={{
+                    flex: 1,
+                    background:
+                      ctoVal > 0
+                        ? "#bbf7d0"
+                        : ctoVal < 0
+                        ? "#fecaca"
+                        : "#f1f5f9",
+                    borderRadius: 6,
+                    padding: "2px 0",
+                    textAlign: "center",
+                    marginLeft: 2,
+                    border: "1px solid #e5e7eb",
+                    transition: "background 0.2s"
+                  }}
+                >
                   <div style={{ fontSize: 10, fontWeight: 600, color: "#0f172a", letterSpacing: 1 }}>CTO</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>--</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
+                    {ctoVal !== 0 ? ctoVal : "--"}
+                  </div>
                 </div>
               </div>
               {/* Spacer to push button to bottom */}
