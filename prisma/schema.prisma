@@ -11,3 +11,60 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model Crew {
+  id         String   @id @default(uuid())
+  name       String   @unique
+  fireCentre String?
+
+  users      User[]
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model User {
+  id         String   @id @default(uuid())
+  firstName  String
+  lastName   String
+  email      String?  @unique
+  position   String?
+
+  crewId     String
+  crew       Crew     @relation(fields: [crewId], references: [id], onDelete: Restrict)
+
+  timeEntries TimeEntry[]
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model TimeEntry {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  date      DateTime
+  type      TimeType
+  direction EntryType
+  hours     Float
+
+  notes     String?
+
+  deletedAt DateTime?   // Soft delete support
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, date])
+}
+
+enum TimeType {
+  ETO
+  CTO
+}
+
+enum EntryType {
+  EARNED
+  USED
+}
