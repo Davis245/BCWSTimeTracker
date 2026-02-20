@@ -33,7 +33,10 @@ export default function Calendar() {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth()); // 0-indexed
-
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editDay, setEditDay] = useState<number | null>(null);
+  const [editEto, setEditEto] = useState("");
+  const [editCto, setEditCto] = useState("");
 
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfWeek(year, month);
@@ -61,8 +64,82 @@ export default function Calendar() {
     month === today.getMonth() &&
     year === today.getFullYear();
 
+  function openEditModal(day: number) {
+    setEditDay(day);
+    setEditEto("");
+    setEditCto("");
+    setModalOpen(true);
+  }
+
+  function closeModal() {
+    setModalOpen(false);
+    setEditDay(null);
+    setEditEto("");
+    setEditCto("");
+  }
+
+  function handleSave() {
+    // Save logic will go here (API call, etc.)
+    closeModal();
+  }
+
+  // Get the date string for the modal
+  let modalDateStr = "";
+  if (editDay !== null) {
+    modalDateStr = `${MONTH_NAMES[month]} ${editDay}, ${year}`;
+  }
+
   return (
-  <div style={{ width: "80vw", margin: "0 auto", background: "#f3f4f6", borderRadius: "0.75rem", padding: "2rem 0" }}>
+    <div style={{ width: "80vw", margin: "0 auto", background: "#f3f4f6", borderRadius: "0.75rem", padding: "2rem 0", position: "relative" }}>
+      {/* Modal Popup */}
+      {modalOpen && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          background: "rgba(0,0,0,0.25)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+        }}>
+          <div style={{
+            background: "#fff",
+            borderRadius: 12,
+            boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
+            padding: 32,
+            minWidth: 320,
+            maxWidth: "90vw",
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+          }}>
+            <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 8 }}>{modalDateStr}</div>
+            <label style={{ fontSize: 14, fontWeight: 500, marginBottom: 0 }}>ETO:</label>
+            <input
+              type="text"
+              value={editEto}
+              onChange={e => setEditEto(e.target.value)}
+              style={{ padding: 8, borderRadius: 6, border: "1px solid #d1d5db", marginBottom: 8 }}
+              placeholder="Enter ETO value"
+            />
+            <label style={{ fontSize: 14, fontWeight: 500, marginBottom: 0 }}>CTO:</label>
+            <input
+              type="text"
+              value={editCto}
+              onChange={e => setEditCto(e.target.value)}
+              style={{ padding: 8, borderRadius: 6, border: "1px solid #d1d5db", marginBottom: 16 }}
+              placeholder="Enter CTO value"
+            />
+            <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+              <button onClick={closeModal} style={{ padding: "8px 18px", borderRadius: 6, border: "1px solid #d1d5db", background: "#f3f4f6", color: "#374151", fontWeight: 500, cursor: "pointer" }}>Cancel</button>
+              <button onClick={handleSave} style={{ padding: "8px 18px", borderRadius: 6, border: "none", background: "#2563eb", color: "#fff", fontWeight: 600, cursor: "pointer" }}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Month nav */}
       <div
         style={{
@@ -178,6 +255,7 @@ export default function Calendar() {
                   outline: "none"
                 }}
                 aria-label="Edit day"
+                onClick={() => openEditModal(day)}
               >
                 <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ marginRight: 4 }}>
                   <path d="M12 20h9" />
