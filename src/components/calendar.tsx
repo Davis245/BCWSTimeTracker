@@ -25,6 +25,7 @@ const MONTH_NAMES = [
 ];
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 function getDaysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate();
@@ -45,6 +46,8 @@ function formatTime(time: string): string {
 
 export default function Calendar() {
   const today = new Date();
+  const [isSingleDayView, setIsSingleDayView] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>(today);
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth()); // 0-indexed
   const [modalOpen, setModalOpen] = useState(false);
@@ -66,6 +69,17 @@ export default function Calendar() {
     }
     fetchEntries();
   }, [year, month, refreshKey]);
+
+  // Watch for viewport size and enable single-day view on small screens
+  useEffect(() => {
+    function checkSize() {
+      // Use 560px as the breakpoint where the full calendar won't fit comfortably
+      setIsSingleDayView(window.innerWidth <= 560);
+    }
+    checkSize();
+    window.addEventListener("resize", checkSize);
+    return () => window.removeEventListener("resize", checkSize);
+  }, []);
 
   // Aggregate per day for this month
   useEffect(() => {
@@ -110,10 +124,49 @@ export default function Calendar() {
     }
   }
 
+  function prevDay() {
+    const d = new Date(selectedDate);
+    d.setDate(d.getDate() - 1);
+    setSelectedDate(d);
+    setYear(d.getFullYear());
+    setMonth(d.getMonth());
+  }
+
+  function nextDay() {
+    const d = new Date(selectedDate);
+    d.setDate(d.getDate() + 1);
+    setSelectedDate(d);
+    setYear(d.getFullYear());
+    setMonth(d.getMonth());
+  }
+
   const isToday = (day: number) =>
     day === today.getDate() &&
     month === today.getMonth() &&
     year === today.getFullYear();
+
+  // Helper to compute totals for an arbitrary date (used in single-day view)
+  function getTotalsForDate(d: Date) {
+    let eto = 0;
+    let cto = 0;
+    let hasEto = false;
+    let hasCto = false;
+    for (const entry of entries) {
+      const ed = new Date(entry.date);
+      if (ed.getFullYear() === d.getFullYear() && ed.getMonth() === d.getMonth() && ed.getDate() === d.getDate()) {
+        const sign = entry.direction === "EARNED" ? 1 : -1;
+        if (entry.type === "ETO") {
+          eto += sign * entry.hours;
+          hasEto = true;
+        }
+        if (entry.type === "CTO") {
+          cto += sign * entry.hours;
+          hasCto = true;
+        }
+      }
+    }
+    return { ETO: eto, CTO: cto, hasEto, hasCto };
+  }
 
   function openEditModal(day: number) {
     setEditDay(day);
@@ -196,6 +249,11 @@ export default function Calendar() {
     modalDateStr = `${MONTH_NAMES[month]} ${editDay}, ${year}`;
   }
 
+  // If in single-day view use selectedDate for header label
+  const headerDateLabel = isSingleDayView
+    ? `${DAY_NAMES[selectedDate.getDay()]}, ${MONTH_NAMES[selectedDate.getMonth()]} ${selectedDate.getDate()}, ${selectedDate.getFullYear()}`
+    : `${MONTH_NAMES[month]} ${year}`;
+
   return (
   <div className="w-full max-w-5xl mx-auto bg-gray-100 rounded-xl py-6 px-4 sm:px-6 relative">
       {/* Modal Popup */}
@@ -256,171 +314,279 @@ export default function Calendar() {
           marginBottom: "1rem",
         }}
       >
-        <button onClick={prevMonth} style={navBtnStyle} aria-label="Previous month">
+        <button onClick={isSingleDayView ? prevDay : prevMonth} style={navBtnStyle} aria-label="Previous">
           ‹
         </button>
-        <span style={{ fontSize: "1.5rem", fontWeight: 600, color: "#111827" }}>
-          {MONTH_NAMES[month]} {year}
+        <span style={{ fontSize: "1.25rem", fontWeight: 600, color: "#111827" }}>
+          {headerDateLabel}
         </span>
-        <button onClick={nextMonth} style={navBtnStyle} aria-label="Next month">
+        <button onClick={isSingleDayView ? nextDay : nextMonth} style={navBtnStyle} aria-label="Next">
           ›
         </button>
       </div>
 
 
 
-      {/* Day-of-week header */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "1px" }}>
-        {DAY_LABELS.map((d) => (
+      {/* Day-of-week header and calendar grid - switch to single-day when space is tight */}
+      {!isSingleDayView ? (
+        <>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "1px" }}>
+            {DAY_LABELS.map((d) => (
+              <div
+                key={d}
+                style={{
+                  textAlign: "center",
+                  fontSize: "0.9rem",
+                  fontWeight: 600,
+                  color: "#6b7280",
+                  padding: "0.5rem 0",
+                }}
+              >
+                {d}
+              </div>
+            ))}
+          </div>
+
           <div
-            key={d}
             style={{
-              textAlign: "center",
-              fontSize: "0.9rem",
-              fontWeight: 600,
-              color: "#6b7280",
-              padding: "0.5rem 0",
+              display: "grid",
+              gridTemplateColumns: "repeat(7, 1fr)",
+              gap: "1px",
+              backgroundColor: "#f3f4f6",
+              border: "1px solid #e5e7eb",
+              borderRadius: "0.5rem",
+              overflow: "hidden",
             }}
           >
-            {d}
+            {/* Empty leading cells */}
+            {Array.from({ length: firstDay }).map((_, i) => (
+              <div key={`empty-${i}`} style={emptyCellStyle} />
+            ))}
+
+            {/* Day cells */}
+            {Array.from({ length: daysInMonth }).map((_, i) => {
+              const day = i + 1;
+              const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+              const etoVal = dayTotals[key]?.ETO ?? 0;
+              const ctoVal = dayTotals[key]?.CTO ?? 0;
+              const hasEto = !!dayTotals[key]?.hasEto;
+              const hasCto = !!dayTotals[key]?.hasCto;
+              return (
+                <div
+                  key={day}
+                  style={{
+                    ...cellStyle,
+                    backgroundColor: isToday(day) ? "#e0e7ef" : "#fff",
+                    border: "1px solid #e5e7eb",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-start",
+                    height: "100%",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: "1rem",
+                      fontWeight: isToday(day) ? 700 : 400,
+                      color: isToday(day) ? "#2563eb" : "#374151",
+                    }}
+                  >
+                    {day}
+                  </span>
+                  {/* ETO/CTO cards */}
+                  <div style={{ display: "flex", gap: 4, marginTop: 4, width: "100%" }}>
+                    <div
+                      style={{
+                          flex: 1,
+                          background:
+                            etoVal > 0
+                              ? "#bbf7d0" // green-200
+                              : etoVal < 0
+                              ? "#fecaca" // red-200
+                              : "#f1f5f9",
+                          borderRadius: 6,
+                          padding: "2px 0",
+                          textAlign: "center",
+                          marginRight: 2,
+                          border: "1px solid #e5e7eb",
+                          transition: "background 0.2s",
+                          height: "36px",
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "center",
+                        }}
+                    >
+                      <div style={{ fontSize: 10, fontWeight: 600, color: "#0f172a", letterSpacing: 1 }}>ETO</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
+                        {hasEto ? etoVal : "--"}
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                          flex: 1,
+                          background:
+                            ctoVal > 0
+                              ? "#bbf7d0"
+                              : ctoVal < 0
+                              ? "#fecaca"
+                              : "#f1f5f9",
+                          borderRadius: 6,
+                          padding: "2px 0",
+                          textAlign: "center",
+                          marginLeft: 2,
+                          border: "1px solid #e5e7eb",
+                          transition: "background 0.2s",
+                          height: "36px",
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "center",
+                        }}
+                    >
+                      <div style={{ fontSize: 10, fontWeight: 600, color: "#0f172a", letterSpacing: 1 }}>CTO</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
+                        {hasCto ? ctoVal : "--"}
+                      </div>
+                    </div>
+                  </div>
+                  {/* Spacer to push button to bottom */}
+                  <div style={{ flex: 1 }} />
+                  {/* Edit button at bottom */}
+                  <button
+                    style={{
+                        marginTop: "auto",
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        background: "#f3f4f6",
+                        border: "1px solid #e5e7eb",
+                        borderRadius: 6,
+                        padding: "4px 0",
+                        cursor: "pointer",
+                        color: "#64748b",
+                        fontSize: 14,
+                        fontWeight: 500,
+                        gap: 6,
+                        outline: "none"
+                      }}
+                    aria-label="Edit day"
+                    onClick={() => openEditModal(day)}
+                  >
+                    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ marginRight: 4 }}>
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                    </svg>
+                  </button>
+                </div>
+              );
+            })}
+
+            {/* Empty trailing cells to complete the last row */}
+            {Array.from({
+              length: (7 - ((firstDay + daysInMonth) % 7)) % 7,
+            }).map((_, i) => (
+              <div key={`trail-${i}`} style={emptyCellStyle} />
+            ))}
           </div>
-        ))}
-      </div>
-
-      {/* Calendar grid */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(7, 1fr)",
-          gap: "1px",
-          backgroundColor: "#f3f4f6",
-          border: "1px solid #e5e7eb",
-          borderRadius: "0.5rem",
-          overflow: "hidden",
-        }}
-      >
-        {/* Empty leading cells */}
-        {Array.from({ length: firstDay }).map((_, i) => (
-          <div key={`empty-${i}`} style={emptyCellStyle} />
-        ))}
-
-        {/* Day cells */}
-        {Array.from({ length: daysInMonth }).map((_, i) => {
-          const day = i + 1;
-          const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-          const etoVal = dayTotals[key]?.ETO ?? 0;
-          const ctoVal = dayTotals[key]?.CTO ?? 0;
-          const hasEto = !!dayTotals[key]?.hasEto;
-          const hasCto = !!dayTotals[key]?.hasCto;
-          return (
-            <div
-              key={day}
-              style={{
-                ...cellStyle,
-                backgroundColor: isToday(day) ? "#e0e7ef" : "#fff",
-                border: "1px solid #e5e7eb",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "flex-start",
-                height: "100%",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "1rem",
-                  fontWeight: isToday(day) ? 700 : 400,
-                  color: isToday(day) ? "#2563eb" : "#374151",
-                }}
-              >
-                {day}
-              </span>
-              {/* ETO/CTO cards */}
-              <div style={{ display: "flex", gap: 4, marginTop: 4, width: "100%" }}>
-                <div
-                  style={{
-                    flex: 1,
-                    background:
-                      etoVal > 0
-                        ? "#bbf7d0" // green-200
-                        : etoVal < 0
-                        ? "#fecaca" // red-200
-                        : "#f1f5f9",
-                    borderRadius: 6,
-                    padding: "2px 0",
-                    textAlign: "center",
-                    marginRight: 2,
-                    border: "1px solid #e5e7eb",
-                    transition: "background 0.2s"
-                  }}
-                >
-                  <div style={{ fontSize: 10, fontWeight: 600, color: "#0f172a", letterSpacing: 1 }}>ETO</div>
+        </>
+      ) : (
+  // Single-day compact view styled like a calendar day cell
+  <div style={{ backgroundColor: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: "0.5rem", overflow: "hidden", display: "flex", justifyContent: "center", padding: "0.75rem" }}>
+          {/* Single day card (looks like one of the day cells) */}
+          {(() => {
+            const d = selectedDate;
+            const day = d.getDate();
+            const totals = getTotalsForDate(d);
+            return (
+              <div style={{ ...cellStyle, backgroundColor: "#fff", border: "1px solid #e5e7eb", display: "flex", flexDirection: "column", alignItems: "flex-start", width: 300, height: 400, maxWidth: "96vw", padding: "0.5rem", boxSizing: "border-box" }}>
+                {/* ETO/CTO small cards like in month view (no day label inside) */}
+                {/* square ETO/CTO mini-cards (match month-cell ratio) */}
+                <div style={{ display: "flex", gap: 8, marginTop: 8, width: "100%", justifyContent: "center" }}>
+                  <div
+                    style={{
+                      flex: "0 0 48%",
+                      aspectRatio: "4 / 3",
+                      background:
+                        totals.ETO > 0
+                          ? "#bbf7d0"
+                          : totals.ETO < 0
+                          ? "#fecaca"
+                          : "#f1f5f9",
+                      borderRadius: 6,
+                      textAlign: "center",
+                      border: "1px solid #e5e7eb",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
+                      padding: "4px",
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    <div style={{ fontSize: 10, fontWeight: 600, color: "#0f172a", letterSpacing: 1 }}>ETO</div>
                     <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
-                    {hasEto ? etoVal : "--"}
+                      {totals.hasEto ? totals.ETO : "--"}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      flex: "0 0 48%",
+                      aspectRatio: "4 / 3",
+                      background:
+                        totals.CTO > 0
+                          ? "#bbf7d0"
+                          : totals.CTO < 0
+                          ? "#fecaca"
+                          : "#f1f5f9",
+                      borderRadius: 6,
+                      textAlign: "center",
+                      border: "1px solid #e5e7eb",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
+                      padding: "4px",
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    <div style={{ fontSize: 10, fontWeight: 600, color: "#0f172a", letterSpacing: 1 }}>CTO</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
+                      {totals.hasCto ? totals.CTO : "--"}
+                    </div>
                   </div>
                 </div>
-                <div
+                {/* Spacer */}
+                <div style={{ flex: 1 }} />
+                <button
+                  onClick={() => openEditModal(day)}
+                  aria-label="Edit day"
                   style={{
-                    flex: 1,
-                    background:
-                      ctoVal > 0
-                        ? "#bbf7d0"
-                        : ctoVal < 0
-                        ? "#fecaca"
-                        : "#f1f5f9",
-                    borderRadius: 6,
-                    padding: "2px 0",
-                    textAlign: "center",
-                    marginLeft: 2,
+                    marginTop: "auto",
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "#f3f4f6",
                     border: "1px solid #e5e7eb",
-                    transition: "background 0.2s"
+                    borderRadius: 8,
+                    padding: "0",
+                    height: "48px",
+                    cursor: "pointer",
+                    color: "#64748b",
+                    fontSize: 14,
+                    fontWeight: 500,
+                    gap: 6,
+                    outline: "none"
                   }}
                 >
-                  <div style={{ fontSize: 10, fontWeight: 600, color: "#0f172a", letterSpacing: 1 }}>CTO</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
-                    {hasCto ? ctoVal : "--"}
-                  </div>
-                </div>
+                  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ marginRight: 4 }}>
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                  </svg>
+                </button>
               </div>
-              {/* Spacer to push button to bottom */}
-              <div style={{ flex: 1 }} />
-              {/* Edit button at bottom */}
-              <button
-                style={{
-                  marginTop: "auto",
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background: "#f3f4f6",
-                  border: "1px solid #e5e7eb",
-                  borderRadius: 6,
-                  padding: "4px 0",
-                  cursor: "pointer",
-                  color: "#64748b",
-                  fontSize: 14,
-                  fontWeight: 500,
-                  gap: 6,
-                  outline: "none"
-                }}
-                aria-label="Edit day"
-                onClick={() => openEditModal(day)}
-              >
-                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ marginRight: 4 }}>
-                  <path d="M12 20h9" />
-                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-                </svg>
-              </button>
-            </div>
-          );
-        })}
-
-        {/* Empty trailing cells to complete the last row */}
-        {Array.from({
-          length: (7 - ((firstDay + daysInMonth) % 7)) % 7,
-        }).map((_, i) => (
-          <div key={`trail-${i}`} style={emptyCellStyle} />
-        ))}
-      </div>
+            );
+          })()}
+        </div>
+      )}
     </div>
   );
 }
