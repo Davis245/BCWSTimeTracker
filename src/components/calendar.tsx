@@ -237,7 +237,6 @@ export default function Calendar() {
     try {
       const responses = await Promise.all(requests);
       const statuses = responses.map((r) => r.status);
-      
       // attempt to parse json bodies for errors and collect created entries
       const bodies = await Promise.all(responses.map(async (r) => {
         try { return await r.json(); } catch { return null; }
@@ -249,6 +248,16 @@ export default function Calendar() {
         // ensure savedAt is present on returned bodies (fallback to our payload value or now)
         const withSaved = created.map((c: any) => ({ ...c, savedAt: c.savedAt || new Date().toISOString() }));
         setEntries((prev) => [...prev, ...withSaved]);
+        // show success toast for the number of entries created
+        showToast("success", `${withSaved.length} entr${withSaved.length === 1 ? "y" : "ies"} saved`);
+      }
+
+      // If any responses failed, show an error toast (and still keep the optimistic created items)
+      const allOk = responses.every((r) => r.ok);
+      if (!allOk) {
+        const errorMsgs = (bodies || []).map((b: any) => b?.error).filter(Boolean);
+        const errMsg = errorMsgs.length > 0 ? errorMsgs.join("; ") : `Save failed: ${statuses.join(",")}`;
+        showToast("error", errMsg);
       }
 
       // notify others that data changed (server-side) — keeps the existing refresh flow
