@@ -57,3 +57,27 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+export async function GET(request: Request) {
+  try {
+    const session = await auth();
+    if (!session || !session.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const dbUser = await prisma.user.findUnique({ where: { id: session.user.id }, include: { crew: true } });
+    if (!dbUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const firstName = dbUser.firstName ?? "";
+    const lastName = dbUser.lastName ?? "";
+    const email = dbUser.email ?? session.user.email ?? "";
+    const crew = dbUser.crew ? { id: dbUser.crew.id, name: dbUser.crew.name } : null;
+
+    return NextResponse.json({ user: { firstName, lastName, email, crew } });
+  } catch (err) {
+    console.error("/api/profile GET error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

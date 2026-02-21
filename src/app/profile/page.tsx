@@ -1,32 +1,58 @@
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+"use client";
+
+import { useEffect, useState } from "react";
 import SignOutButton from "@/components/SignOutButton";
 import EditProfileButton from "@/components/EditProfileButton";
 import Link from "next/link";
 
-export default async function ProfilePage() {
-  const session = await auth();
-  if (!session) {
-    return (
-      <div className="p-8">
-        <h1 className="text-2xl font-semibold mb-4">Profile</h1>
-        <p className="text-zinc-600">You are not signed in.</p>
-      </div>
-    );
-  }
+type ProfileUser = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  crew: { id: string; name: string } | null;
+};
 
-  const { user } = session;
+export default function ProfilePageClient() {
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<ProfileUser | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch richer user info (first/last name, crew) from the database
-  const dbUser = await prisma.user.findUnique({
-    where: { id: user.id },
-    include: { crew: true },
-  });
+  useEffect(() => {
+    let mounted = true;
+    async function fetchProfile() {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/profile");
+        if (!res.ok) {
+          if (res.status === 401) {
+            if (!mounted) return;
+            setError("You are not signed in.");
+            setUser(null);
+            setLoading(false);
+            return;
+          }
+          const json = await res.json().catch(() => null);
+          throw new Error(json?.error || `Failed to load (${res.status})`);
+        }
+        const json = await res.json();
+        if (!mounted) return;
+        setUser(json.user ?? null);
+        setError(null);
+      } catch (err: any) {
+        if (!mounted) return;
+        setError(err?.message ?? "Unknown error");
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+    fetchProfile();
+    return () => { mounted = false; };
+  }, []);
 
-  const firstName = dbUser?.firstName ?? (user.name ? user.name.split(" ").slice(0, -1).join(" ") || user.name : "");
-  const lastName = dbUser?.lastName ?? (user.name ? user.name.split(" ").slice(-1).join(" ") : "");
-  const email = dbUser?.email ?? user.email ?? "";
-  const crewName = dbUser?.crew?.name ?? "-";
+  const firstName = user?.firstName ?? "";
+  const lastName = user?.lastName ?? "";
+  const email = user?.email ?? "";
+  const crewName = user?.crew?.name ?? "-";
 
   return (
     <>
@@ -40,29 +66,37 @@ export default async function ProfilePage() {
         <h1 className="text-2xl font-semibold mb-4 text-center">Profile</h1>
 
         <div className="bg-white p-6 rounded-lg shadow-sm border border-zinc-100 w-full max-w-md text-center">
-          <div className="grid grid-cols-1 gap-y-6 mb-6">
-            <div>
-              <div className="text-xs text-zinc-400">First name</div>
-              <div className="font-medium">{firstName || "-"}</div>
-            </div>
-            <div>
-              <div className="text-xs text-zinc-400">Last name</div>
-              <div className="font-medium">{lastName || "-"}</div>
-            </div>
-            <div>
-              <div className="text-xs text-zinc-400">Email</div>
-              <div className="font-medium">{email || "-"}</div>
-            </div>
-            <div>
-              <div className="text-xs text-zinc-400">Crew</div>
-              <div className="font-medium">{crewName}</div>
-            </div>
-          </div>
+          {loading ? (
+            <div className="text-zinc-600">Fetching profile…</div>
+          ) : error ? (
+            <div className="text-zinc-600">{error}</div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 gap-y-6 mb-6">
+                <div>
+                  <div className="text-xs text-zinc-400">First name</div>
+                  <div className="font-medium">{firstName || "-"}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-zinc-400">Last name</div>
+                  <div className="font-medium">{lastName || "-"}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-zinc-400">Email</div>
+                  <div className="font-medium">{email || "-"}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-zinc-400">Crew</div>
+                  <div className="font-medium">{crewName}</div>
+                </div>
+              </div>
 
-          <div className="mt-12 flex gap-3">
-            <EditProfileButton className="flex-1" />
-            <SignOutButton className="flex-1" />
-          </div>
+              <div className="mt-12 flex gap-3">
+                <EditProfileButton className="flex-1" />
+                <SignOutButton className="flex-1" />
+              </div>
+            </>
+          )}
         </div>
       </div>
     </>
