@@ -92,7 +92,7 @@ export default async function CrewPage() {
                 </thead>
                 <tbody>
                   {members.map((m) => (
-                    <tr key={m.id} className="align-top">
+                    <tr key={m.id} className="align-middle">
                       <td className="px-4 py-3 font-medium">{m.firstName} {m.lastName}</td>
                       <td className="px-4 py-3 font-medium text-center">{m.etoTotal}</td>
                       <td className="px-4 py-3 text-zinc-600 text-center">{m.etoLast ?? "--"}</td>
