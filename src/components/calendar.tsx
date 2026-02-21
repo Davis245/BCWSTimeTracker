@@ -315,8 +315,19 @@ export default function Calendar() {
                 modalEntries
                   .filter((e) => e.type === "ETO")
                   .map((entry) => (
-                    <div key={entry.id} style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: 10, borderRadius: 8, background: "#fff", border: "1px solid #e5e7eb" }}>
-                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                    <div
+                      key={entry.id}
+                      style={{
+                        display: "flex",
+                        gap: 12,
+                        alignItems: "flex-start",
+                        padding: 10,
+                        borderRadius: 8,
+                        background: entry.direction === "EARNED" ? "#bbf7d0" : "#fecaca",
+                        border: "1px solid #e5e7eb",
+                      }}
+                    >
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
                             <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
                               <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>ETO</div>
                               <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{entry.direction === "EARNED" ? "+" : "-"}{entry.hours}</div>
@@ -344,8 +355,19 @@ export default function Calendar() {
                 modalEntries
                   .filter((e) => e.type === "CTO")
                   .map((entry) => (
-                    <div key={entry.id} style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: 10, borderRadius: 8, background: "#fff", border: "1px solid #e5e7eb" }}>
-                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                    <div
+                      key={entry.id}
+                      style={{
+                        display: "flex",
+                        gap: 12,
+                        alignItems: "flex-start",
+                        padding: 10,
+                        borderRadius: 8,
+                        background: entry.direction === "EARNED" ? "#bbf7d0" : "#fecaca",
+                        border: "1px solid #e5e7eb",
+                      }}
+                    >
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
                             <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
                               <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>CTO</div>
                               <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{entry.direction === "EARNED" ? "+" : "-"}{entry.hours}</div>
