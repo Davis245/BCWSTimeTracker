@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import type { User, TimeEntry } from "@prisma/client";
 
 export default async function CrewPage() {
   const session = await auth();
@@ -39,7 +40,7 @@ export default async function CrewPage() {
       orderBy: { lastName: "asc" },
     });
 
-    members = users.map((u) => {
+  members = users.map((u: User & { timeEntries: TimeEntry[] }) => {
       let etoSum = 0;
       let ctoSum = 0;
       let etoLastDate: string | null = null;
