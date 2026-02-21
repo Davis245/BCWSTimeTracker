@@ -1,87 +1,68 @@
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
-// Local type describing the subset of the Prisma User we actually use here
-type UserWithEntries = {
+type Member = {
   id: string;
   firstName: string | null;
   lastName: string | null;
-  timeEntries: Array<{
-    id: string;
-    hours: number;
-    type: string;
-    direction: string;
-    date: Date | string;
-    deletedAt?: Date | null;
-  }>;
+  etoTotal: number | string;
+  ctoTotal: number | string;
+  etoLast?: string | null;
+  ctoLast?: string | null;
 };
 
-export default async function CrewPage() {
-  const session = await auth();
-  if (!session) {
-    return (
-      <div className="p-8">
-        <h1 className="text-2xl font-semibold mb-4">Crew</h1>
-        <p className="text-zinc-600">You are not signed in.</p>
-      </div>
-    );
-  }
+export default function CrewPageClient() {
+  const [loading, setLoading] = useState(true);
+  const [crew, setCrew] = useState<any | null>(null);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch the current user's crew only
-  const dbUser = await prisma.user.findUnique({ where: { id: session.user.id }, include: { crew: true } });
-  const crew = dbUser?.crew ?? null;
-
-  // If user has a crew, compute per-member ETO/CTO totals and last-updated dates for the current year
-  let members: Array<{
-    id: string;
-    firstName: string | null;
-    lastName: string | null;
-    etoTotal: number | string;
-    ctoTotal: number | string;
-    etoLast?: string;
-    ctoLast?: string;
-  }> = [];
-
-  if (crew) {
-    const thisYear = new Date().getFullYear();
-    const start = new Date(thisYear, 0, 1);
-    const end = new Date(thisYear + 1, 0, 1);
-
-    const users = await prisma.user.findMany({
-      where: { crewId: crew.id },
-      include: { timeEntries: { where: { deletedAt: null, date: { gte: start, lt: end } } } },
-      orderBy: { lastName: "asc" },
-    });
-
-  members = users.map((u: UserWithEntries) => {
-      let etoSum = 0;
-      let ctoSum = 0;
-      let etoLastDate: string | null = null;
-      let ctoLastDate: string | null = null;
-      for (const entry of u.timeEntries) {
-        const sign = entry.direction === "EARNED" ? 1 : -1;
-        if (entry.type === "ETO") {
-          etoSum += sign * entry.hours;
-          if (!etoLastDate || new Date(entry.date) > new Date(etoLastDate)) etoLastDate = new Date(entry.date).toISOString();
+  useEffect(() => {
+    let mounted = true;
+    async function fetchCrew() {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/crew");
+        if (!res.ok) {
+          if (res.status === 401) {
+            if (!mounted) return;
+            setCrew(null);
+            setMembers([]);
+            setError("You are not signed in.");
+            setLoading(false);
+            return;
+          }
+          const json = await res.json().catch(() => null);
+          throw new Error(json?.error || `Failed to load (${res.status})`);
         }
-        if (entry.type === "CTO") {
-          ctoSum += sign * entry.hours;
-          if (!ctoLastDate || new Date(entry.date) > new Date(ctoLastDate)) ctoLastDate = new Date(entry.date).toISOString();
-        }
+        const json = await res.json();
+        if (!mounted) return;
+        setCrew(json.crew);
+        // members returned with ISO strings for dates; convert to display strings
+        const transformed: Member[] = (json.members || []).map((m: any) => ({
+          id: m.id,
+          firstName: m.firstName,
+          lastName: m.lastName,
+          etoTotal: m.etoTotal,
+          ctoTotal: m.ctoTotal,
+          etoLast: m.etoLast ? new Date(m.etoLast).toLocaleDateString() : undefined,
+          ctoLast: m.ctoLast ? new Date(m.ctoLast).toLocaleDateString() : undefined,
+        }));
+        setMembers(transformed);
+        setError(null);
+      } catch (err: any) {
+        if (!mounted) return;
+        setError(err?.message ?? "Unknown error");
+      } finally {
+        if (mounted) setLoading(false);
       }
+    }
 
-      return {
-        id: u.id,
-        firstName: u.firstName,
-        lastName: u.lastName,
-        etoTotal: etoSum === 0 ? 0 : etoSum || "--",
-        ctoTotal: ctoSum === 0 ? 0 : ctoSum || "--",
-        etoLast: etoLastDate ? new Date(etoLastDate).toLocaleDateString() : undefined,
-        ctoLast: ctoLastDate ? new Date(ctoLastDate).toLocaleDateString() : undefined,
-      };
-    });
-  }
+    fetchCrew();
+    return () => { mounted = false; };
+  }, []);
 
   return (
     <>
@@ -95,7 +76,11 @@ export default async function CrewPage() {
         <h1 className="text-2xl font-semibold mb-4">{crew ? crew.name : "Crew"}</h1>
 
       <div className="bg-white p-6 rounded-lg shadow-sm border border-zinc-100 w-full max-w-3xl text-center">
-        {!crew ? (
+        {loading ? (
+          <div className="text-zinc-600">Fetching crew data…</div>
+        ) : error ? (
+          <div className="text-zinc-600">{error}</div>
+        ) : !crew ? (
           <div className="text-zinc-600">You are not assigned to a crew.</div>
         ) : (
           <div>
