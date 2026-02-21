@@ -9,6 +9,7 @@ type TimeEntry = {
   id: string;
   userId: string;
   date: string;
+  savedAt?: string;
   type: "ETO" | "CTO";
   direction: "EARNED" | "USED";
   hours: number;
@@ -184,7 +185,11 @@ export default function Calendar() {
 
   async function handleSave() {
     if (editDay == null) return;
-    const date = new Date(year, month, editDay).toISOString(); // Full ISO-8601 string
+    // Build a date using the selected day but stamp it with the current local time so
+    // the saved entry records when the user clicked Save.
+    const now = new Date();
+    const dateObj = new Date(year, month, editDay, now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+    const date = dateObj.toISOString(); // Full ISO-8601 string
     const requests = [];
     // ETO
     if (editEto !== "" && !isNaN(Number(editEto))) {
@@ -194,6 +199,7 @@ export default function Calendar() {
         type: "ETO",
         direction: etoNum >= 0 ? "EARNED" : "USED",
         hours: Math.abs(etoNum),
+        savedAt: new Date().toISOString(),
       };
       
       requests.push(
@@ -212,6 +218,7 @@ export default function Calendar() {
         type: "CTO",
         direction: ctoNum >= 0 ? "EARNED" : "USED",
         hours: Math.abs(ctoNum),
+        savedAt: new Date().toISOString(),
       };
       
       requests.push(
@@ -226,12 +233,20 @@ export default function Calendar() {
       const responses = await Promise.all(requests);
       const statuses = responses.map((r) => r.status);
       
-      // attempt to parse json bodies for errors
+      // attempt to parse json bodies for errors and collect created entries
       const bodies = await Promise.all(responses.map(async (r) => {
         try { return await r.json(); } catch { return null; }
       }));
-      
-      // notify others that data changed
+
+      // If the API returned created entries, optimistically add them to local state
+      const created = (bodies || []).filter((b: any) => b && b.id);
+      if (created.length > 0) {
+        // ensure savedAt is present on returned bodies (fallback to our payload value or now)
+        const withSaved = created.map((c: any) => ({ ...c, savedAt: c.savedAt || new Date().toISOString() }));
+        setEntries((prev) => [...prev, ...withSaved]);
+      }
+
+      // notify others that data changed (server-side) — keeps the existing refresh flow
       try {
         triggerRefresh();
       } catch (_) {
@@ -253,6 +268,16 @@ export default function Calendar() {
   const headerDateLabel = isSingleDayView
     ? `${DAY_NAMES[selectedDate.getDay()]}, ${MONTH_NAMES[selectedDate.getMonth()]} ${selectedDate.getDate()}, ${selectedDate.getFullYear()}`
     : `${MONTH_NAMES[month]} ${year}`;
+
+  // Entries for the edit modal (entries that match the currently edited day)
+  const modalEntries = (() => {
+    if (editDay == null) return [] as TimeEntry[];
+    const d = new Date(year, month, editDay);
+    return entries.filter((e) => {
+      const ed = new Date(e.date);
+      return ed.getFullYear() === d.getFullYear() && ed.getMonth() === d.getMonth() && ed.getDate() === d.getDate();
+    });
+  })();
 
   return (
   <div className="w-full max-w-5xl mx-auto bg-gray-100 rounded-xl py-6 px-4 sm:px-6 relative">
@@ -282,7 +307,29 @@ export default function Calendar() {
             gap: 16,
           }}>
             <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 8 }}>{modalDateStr}</div>
+            {/* Previous entries will appear under the existing ETO/CTO labels below */}
             <label style={{ fontSize: 14, fontWeight: 500, marginBottom: 0 }}>ETO:</label>
+            {/* ETO entries for this date */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8, marginBottom: 8 }}>
+              {modalEntries.filter((e) => e.type === "ETO").length > 0 ? (
+                modalEntries
+                  .filter((e) => e.type === "ETO")
+                  .map((entry) => (
+                    <div key={entry.id} style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: 10, borderRadius: 8, background: "#fff", border: "1px solid #e5e7eb" }}>
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                            <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>ETO</div>
+                              <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{entry.direction === "EARNED" ? "+" : "-"}{entry.hours}</div>
+                            </div>
+                            {entry.notes && <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>{entry.notes}</div>}
+                            <div style={{ fontSize: 12, color: "#6b7280", marginTop: 6 }}>{new Date(entry.savedAt || entry.date).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</div>
+                          </div>
+                        </div>
+                  ))
+              ) : (
+                <div style={{ fontSize: 13, color: "#6b7280" }}>No ETO entries</div>
+              )}
+            </div>
             <input
               type="text"
               value={editEto}
@@ -291,6 +338,27 @@ export default function Calendar() {
               placeholder="Enter ETO value"
             />
             <label style={{ fontSize: 14, fontWeight: 500, marginBottom: 0 }}>CTO:</label>
+            {/* CTO entries for this date */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8, marginBottom: 8 }}>
+              {modalEntries.filter((e) => e.type === "CTO").length > 0 ? (
+                modalEntries
+                  .filter((e) => e.type === "CTO")
+                  .map((entry) => (
+                    <div key={entry.id} style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: 10, borderRadius: 8, background: "#fff", border: "1px solid #e5e7eb" }}>
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                            <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>CTO</div>
+                              <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{entry.direction === "EARNED" ? "+" : "-"}{entry.hours}</div>
+                            </div>
+                            {entry.notes && <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>{entry.notes}</div>}
+                            <div style={{ fontSize: 12, color: "#6b7280", marginTop: 6 }}>{new Date(entry.savedAt || entry.date).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</div>
+                          </div>
+                        </div>
+                  ))
+              ) : (
+                <div style={{ fontSize: 13, color: "#6b7280" }}>No CTO entries</div>
+              )}
+            </div>
             <input
               type="text"
               value={editCto}

@@ -16,6 +16,10 @@ const timeEntrySchema = z.object({
     return val;
   }, z.number().min(0, "Hours must be non-negative")),
   notes: z.string().optional(),
+  savedAt: z.string().optional().refine(
+    (val) => val === undefined || !isNaN(Date.parse(val)),
+    { message: "Invalid savedAt date format" }
+  ),
 });
 
 export async function POST(request: Request) {
@@ -34,7 +38,7 @@ export async function POST(request: Request) {
     if (!parseResult.success) {
       return NextResponse.json({ error: parseResult.error.flatten() }, { status: 400 });
     }
-    const { date, type, direction, hours, notes } = parseResult.data;
+    const { date, type, direction, hours, notes, savedAt } = parseResult.data;
     const entry = await createTimeEntry({
       userId: session.user.id,
       date,
@@ -42,6 +46,7 @@ export async function POST(request: Request) {
       direction,
       hours,
       notes,
+      savedAt,
     });
     return NextResponse.json(entry, { status: 201 });
   } catch (err) {

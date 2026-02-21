@@ -46,6 +46,7 @@ model TimeEntry {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   date      DateTime
+  savedAt   DateTime?
   type      TimeType
   direction EntryType
   hours     Float
