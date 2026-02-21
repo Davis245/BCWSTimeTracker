@@ -197,7 +197,7 @@ export default function Calendar() {
   }
 
   return (
-    <div style={{ width: "80vw", margin: "0 auto", background: "#f3f4f6", borderRadius: "0.75rem", padding: "2rem 0", position: "relative" }}>
+  <div className="w-full max-w-5xl mx-auto bg-gray-100 rounded-xl py-6 px-4 sm:px-6 relative">
       {/* Modal Popup */}
       {modalOpen && (
         <div style={{
