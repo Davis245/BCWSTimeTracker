@@ -3,6 +3,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useTimeEntryRefresh } from "./TimeEntryRefreshContext";
+import { useToast } from "../context/ToastContext";
 
 type TimeEntry = {
   id: string;
@@ -17,8 +18,6 @@ type TimeEntry = {
 };
 
 type DayTotals = Record<string, { ETO: number; CTO: number; hasEto?: boolean; hasCto?: boolean }>;
-
-type Toast = { id: number; type: "success" | "error"; message: string };
 
 
 const MONTH_NAMES = [
@@ -46,7 +45,7 @@ function formatTime(time: string): string {
   return `${hour12}:${m} ${ampm}`;
 }
 
-export default function Calendar() {
+function CalendarContent() {
   const today = new Date();
   const [isSingleDayView, setIsSingleDayView] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(today);
@@ -60,10 +59,10 @@ export default function Calendar() {
   const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [toasts, setToasts] = useState<Toast[]>([]);
   const [dayTotals, setDayTotals] = useState<DayTotals>({});
   const { refreshKey } = useTimeEntryRefresh();
   const { triggerRefresh } = useTimeEntryRefresh();
+  const { showToast } = useToast();
 
   // Fetch entries for the current month
   useEffect(() => {
@@ -303,16 +302,6 @@ export default function Calendar() {
     } finally {
       setDeleting(false);
     }
-  }
-
-  function showToast(type: "success" | "error", message: string) {
-    const id = Date.now() + Math.floor(Math.random() * 1000);
-    const t: Toast = { id, type, message };
-    setToasts((prev) => [...prev, t]);
-    // auto-dismiss after 3s
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((x) => x.id !== id));
-    }, 3000);
   }
 
   // Get the date string for the modal
@@ -818,18 +807,12 @@ export default function Calendar() {
           })()}
         </div>
       )}
-    {/* Toast container (top-right) */}
-    <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 1200, display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {toasts.map((t) => (
-        <div key={t.id} style={{ minWidth: 220, maxWidth: 360, padding: '10px 14px', borderRadius: 8, color: '#fff', boxShadow: '0 6px 24px rgba(0,0,0,0.12)', background: t.type === 'success' ? '#16a34a' : '#b91c1c' }}>
-          <div style={{ fontSize: 13, fontWeight: 700 }}>{t.type === 'success' ? 'Success' : 'Error'}</div>
-          <div style={{ fontSize: 13, marginTop: 4 }}>{t.message}</div>
-        </div>
-      ))}
-    </div>
     </div>
   );
 }
+
+// Wrap CalendarContent with ToastProvider so consumers can call useToast()
+export default CalendarContent;
 
 /* ---- shared inline styles ---- */
 

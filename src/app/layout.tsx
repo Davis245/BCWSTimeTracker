@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
+import { ToastProvider } from "../context/ToastContext";
 
 export const metadata: Metadata = {
   title: "BCWS Time Tracker",
@@ -22,7 +23,9 @@ export default function RootLayout({
             <a href="/profile" className="text-zinc-700 hover:text-blue-600 font-medium">Profile</a>
           </div>
         </nav>
-        {children}
+        <ToastProvider>
+          {children}
+        </ToastProvider>
       </body>
     </html>
   );
