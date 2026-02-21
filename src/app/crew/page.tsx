@@ -1,7 +1,21 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import type { User, TimeEntry } from "@prisma/client";
+
+// Local type describing the subset of the Prisma User we actually use here
+type UserWithEntries = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  timeEntries: Array<{
+    id: string;
+    hours: number;
+    type: string;
+    direction: string;
+    date: Date | string;
+    deletedAt?: Date | null;
+  }>;
+};
 
 export default async function CrewPage() {
   const session = await auth();
@@ -21,8 +35,8 @@ export default async function CrewPage() {
   // If user has a crew, compute per-member ETO/CTO totals and last-updated dates for the current year
   let members: Array<{
     id: string;
-    firstName: string;
-    lastName: string;
+    firstName: string | null;
+    lastName: string | null;
     etoTotal: number | string;
     ctoTotal: number | string;
     etoLast?: string;
@@ -40,7 +54,7 @@ export default async function CrewPage() {
       orderBy: { lastName: "asc" },
     });
 
-  members = users.map((u: User & { timeEntries: TimeEntry[] }) => {
+  members = users.map((u: UserWithEntries) => {
       let etoSum = 0;
       let ctoSum = 0;
       let etoLastDate: string | null = null;
@@ -49,11 +63,11 @@ export default async function CrewPage() {
         const sign = entry.direction === "EARNED" ? 1 : -1;
         if (entry.type === "ETO") {
           etoSum += sign * entry.hours;
-          if (!etoLastDate || new Date(entry.date) > new Date(etoLastDate)) etoLastDate = entry.date.toISOString();
+          if (!etoLastDate || new Date(entry.date) > new Date(etoLastDate)) etoLastDate = new Date(entry.date).toISOString();
         }
         if (entry.type === "CTO") {
           ctoSum += sign * entry.hours;
-          if (!ctoLastDate || new Date(entry.date) > new Date(ctoLastDate)) ctoLastDate = entry.date.toISOString();
+          if (!ctoLastDate || new Date(entry.date) > new Date(ctoLastDate)) ctoLastDate = new Date(entry.date).toISOString();
         }
       }
 
