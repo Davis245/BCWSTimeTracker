@@ -317,9 +317,16 @@ export default function Calendar() {
         <button onClick={isSingleDayView ? prevDay : prevMonth} style={navBtnStyle} aria-label="Previous">
           ‹
         </button>
-        <span style={{ fontSize: "1.25rem", fontWeight: 600, color: "#111827" }}>
-          {headerDateLabel}
-        </span>
+        {isSingleDayView ? (
+          <div style={{ textAlign: "center", color: "#111827" }}>
+            <div style={{ fontSize: "0.95rem", fontWeight: 600 }}>{DAY_NAMES[selectedDate.getDay()]}</div>
+            <div style={{ fontSize: "1.1rem", fontWeight: 600 }}>{`${MONTH_NAMES[selectedDate.getMonth()]} ${selectedDate.getDate()}, ${selectedDate.getFullYear()}`}</div>
+          </div>
+        ) : (
+          <span style={{ fontSize: "1.25rem", fontWeight: 600, color: "#111827" }}>
+            {headerDateLabel}
+          </span>
+        )}
         <button onClick={isSingleDayView ? nextDay : nextMonth} style={navBtnStyle} aria-label="Next">
           ›
         </button>
