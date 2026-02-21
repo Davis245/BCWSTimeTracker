@@ -1,7 +1,6 @@
 // Renamed from EventsCalendar.tsx
 
 "use client";
-
 import { useState, useEffect, useCallback } from "react";
 import { useTimeEntryRefresh } from "./TimeEntryRefreshContext";
 
@@ -18,6 +17,8 @@ type TimeEntry = {
 };
 
 type DayTotals = Record<string, { ETO: number; CTO: number; hasEto?: boolean; hasCto?: boolean }>;
+
+type Toast = { id: number; type: "success" | "error"; message: string };
 
 
 const MONTH_NAMES = [
@@ -56,6 +57,10 @@ export default function Calendar() {
   const [editEto, setEditEto] = useState("");
   const [editCto, setEditCto] = useState("");
   const [entries, setEntries] = useState<TimeEntry[]>([]);
+  const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [toasts, setToasts] = useState<Toast[]>([]);
   const [dayTotals, setDayTotals] = useState<DayTotals>({});
   const { refreshKey } = useTimeEntryRefresh();
   const { triggerRefresh } = useTimeEntryRefresh();
@@ -258,6 +263,49 @@ export default function Calendar() {
     closeModal();
   }
 
+  // Delete confirmed via in-app modal. Optimistic UI with revert on failure.
+  async function deleteConfirmed() {
+    const id = entryToDelete;
+    if (!id) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch("/api/time-entry", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || `delete failed: ${res.status}`);
+      }
+      // remove locally on success
+      setEntries((es) => es.filter((e) => e.id !== id));
+      // show success toast
+      showToast("success", "Entry deleted");
+      try { triggerRefresh(); } catch (_) {}
+      // close modal after a short delay so user sees the change
+      setTimeout(() => setEntryToDelete(null), 600);
+    } catch (err: any) {
+      console.error("failed deleting entry", err);
+      const msg = err?.message || "Unable to delete entry";
+      setDeleteError(msg);
+      showToast("error", msg);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  function showToast(type: "success" | "error", message: string) {
+    const id = Date.now() + Math.floor(Math.random() * 1000);
+    const t: Toast = { id, type, message };
+    setToasts((prev) => [...prev, t]);
+    // auto-dismiss after 3s
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((x) => x.id !== id));
+    }, 3000);
+  }
+
   // Get the date string for the modal
   let modalDateStr = "";
   if (editDay !== null) {
@@ -328,14 +376,40 @@ export default function Calendar() {
                       }}
                     >
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-                            <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
-                              <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>ETO</div>
-                              <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{entry.direction === "EARNED" ? "+" : "-"}{entry.hours}</div>
-                            </div>
-                            {entry.notes && <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>{entry.notes}</div>}
-                            <div style={{ fontSize: 12, color: "#6b7280", marginTop: 6 }}>{new Date(entry.savedAt || entry.date).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</div>
-                          </div>
+                        <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>ETO</div>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{entry.direction === "EARNED" ? "+" : "-"}{entry.hours}</div>
                         </div>
+                        {entry.notes && <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>{entry.notes}</div>}
+                        <div style={{ fontSize: 12, color: "#6b7280", marginTop: 6 }}>{new Date(entry.savedAt || entry.date).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</div>
+                      </div>
+                      <button
+                        onClick={() => setEntryToDelete(entry.id)}
+                        aria-label="Delete entry"
+                        title="Delete"
+                        style={{
+                          marginLeft: "auto",
+                          alignSelf: "center",
+                          padding: "6px",
+                          borderRadius: 6,
+                          border: "1px solid rgba(0,0,0,0.08)",
+                          background: "#fff",
+                          color: "#ef4444",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}>
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                          <path d="M10 11v6" />
+                          <path d="M14 11v6" />
+                          <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+                        </svg>
+                      </button>
+                    </div>
                   ))
               ) : (
                 <div style={{ fontSize: 13, color: "#6b7280" }}>No ETO entries</div>
@@ -368,14 +442,40 @@ export default function Calendar() {
                       }}
                     >
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-                            <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
-                              <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>CTO</div>
-                              <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{entry.direction === "EARNED" ? "+" : "-"}{entry.hours}</div>
-                            </div>
-                            {entry.notes && <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>{entry.notes}</div>}
-                            <div style={{ fontSize: 12, color: "#6b7280", marginTop: 6 }}>{new Date(entry.savedAt || entry.date).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</div>
-                          </div>
+                        <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>CTO</div>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{entry.direction === "EARNED" ? "+" : "-"}{entry.hours}</div>
                         </div>
+                        {entry.notes && <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>{entry.notes}</div>}
+                        <div style={{ fontSize: 12, color: "#6b7280", marginTop: 6 }}>{new Date(entry.savedAt || entry.date).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</div>
+                      </div>
+                      <button
+                        onClick={() => setEntryToDelete(entry.id)}
+                        aria-label="Delete entry"
+                        title="Delete"
+                        style={{
+                          marginLeft: "auto",
+                          alignSelf: "center",
+                          padding: "6px",
+                          borderRadius: 6,
+                          border: "1px solid rgba(0,0,0,0.08)",
+                          background: "#fff",
+                          color: "#ef4444",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}>
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                          <path d="M10 11v6" />
+                          <path d="M14 11v6" />
+                          <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+                        </svg>
+                      </button>
+                    </div>
                   ))
               ) : (
                 <div style={{ fontSize: 13, color: "#6b7280" }}>No CTO entries</div>
@@ -391,6 +491,31 @@ export default function Calendar() {
             <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
               <button onClick={closeModal} style={{ padding: "8px 18px", borderRadius: 6, border: "1px solid #d1d5db", background: "#f3f4f6", color: "#374151", fontWeight: 500, cursor: "pointer" }}>Cancel</button>
               <button onClick={handleSave} style={{ padding: "8px 18px", borderRadius: 6, border: "none", background: "#2563eb", color: "#fff", fontWeight: 600, cursor: "pointer" }}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* In-app delete confirmation modal */}
+      {entryToDelete && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          background: "rgba(0,0,0,0.25)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1100,
+        }}>
+          <div style={{ background: "#fff", borderRadius: 12, padding: 20, minWidth: 300, maxWidth: "90vw", boxShadow: "0 6px 30px rgba(0,0,0,0.12)" }}>
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Delete entry</div>
+            <div style={{ color: "#374151", marginBottom: 12 }}>Are you sure you want to delete this entry?</div>
+              {deleteError && <div style={{ color: "#b91c1c", marginBottom: 8 }}>{deleteError}</div>}
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button onClick={() => { setEntryToDelete(null); setDeleteError(null); }} style={{ padding: "8px 12px", borderRadius: 6, border: "1px solid #d1d5db", background: "#f3f4f6", color: "#374151", cursor: "pointer" }}>Cancel</button>
+              <button onClick={() => deleteConfirmed()} disabled={deleting} style={{ padding: "8px 12px", borderRadius: 6, border: "none", background: "#ef4444", color: "#fff", cursor: "pointer", fontWeight: 700 }}>{deleting ? "Deleting…" : "Delete"}</button>
             </div>
           </div>
         </div>
@@ -684,6 +809,15 @@ export default function Calendar() {
           })()}
         </div>
       )}
+    {/* Toast container (top-right) */}
+    <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 1200, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {toasts.map((t) => (
+        <div key={t.id} style={{ minWidth: 220, maxWidth: 360, padding: '10px 14px', borderRadius: 8, color: '#fff', boxShadow: '0 6px 24px rgba(0,0,0,0.12)', background: t.type === 'success' ? '#16a34a' : '#b91c1c' }}>
+          <div style={{ fontSize: 13, fontWeight: 700 }}>{t.type === 'success' ? 'Success' : 'Error'}</div>
+          <div style={{ fontSize: 13, marginTop: 4 }}>{t.message}</div>
+        </div>
+      ))}
+    </div>
     </div>
   );
 }

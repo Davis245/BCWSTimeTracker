@@ -31,3 +31,17 @@ export async function createTimeEntry({ userId, date, type, direction, hours, no
     throw err;
   }
 }
+
+export async function deleteTimeEntry({ id, userId }: { id: string; userId: string }) {
+  try {
+    // Use updateMany to ensure we only affect entries owned by this user
+    const result = await prisma.timeEntry.updateMany({
+      where: { id, userId },
+      data: { deletedAt: new Date() },
+    });
+    return result; // { count }
+  } catch (err) {
+    console.error("[timeEntry.service] prisma.delete error:", err);
+    throw err;
+  }
+}

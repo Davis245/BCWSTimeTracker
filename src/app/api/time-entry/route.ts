@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
 import { createTimeEntry } from "@/services/timeEntry.service";
+import { deleteTimeEntry } from "@/services/timeEntry.service";
 
 const timeEntrySchema = z.object({
   date: z.string().refine(
@@ -51,6 +52,33 @@ export async function POST(request: Request) {
     return NextResponse.json(entry, { status: 201 });
   } catch (err) {
     // Log error internally if needed
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const session = await auth();
+    if (!session || !session.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+    const id = body?.id;
+    if (!id || typeof id !== "string") {
+      return NextResponse.json({ error: "Missing or invalid id" }, { status: 400 });
+    }
+    const result = await deleteTimeEntry({ id, userId: session.user.id });
+    if (result.count === 0) {
+      // nothing deleted - either not found or not owned by user
+      return NextResponse.json({ error: "Not found or not allowed" }, { status: 404 });
+    }
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (err) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
