@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useToast } from "../context/ToastContext";
 import { useRouter } from "next/navigation";
 
 type Props = {
@@ -18,6 +19,7 @@ export default function ProfileEditForm({ firstName, lastName, email, crew }: Pr
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { showToast } = useToast();
 
   function onCancel() {
     router.push("/profile");
@@ -39,14 +41,19 @@ export default function ProfileEditForm({ firstName, lastName, email, crew }: Pr
       });
       if (!res.ok) {
         const json = await res.json().catch(() => null);
-        setError(json?.error ?? `Save failed (${res.status})`);
+        const msg = json?.error ?? `Save failed (${res.status})`;
+        setError(msg);
+        showToast("error", msg);
         setLoading(false);
         return;
       }
-      // success -> go back to profile
+      // success -> show toast and go back to profile
+      showToast("success", "Profile saved");
       router.push("/profile");
     } catch (err: any) {
-      setError(err?.message ?? "Unknown error");
+      const msg = err?.message ?? "Unknown error";
+      setError(msg);
+      showToast("error", msg);
       setLoading(false);
     }
   }
