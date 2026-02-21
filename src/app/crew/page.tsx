@@ -84,8 +84,15 @@ export default async function CrewPage() {
   }
 
   return (
-    <div className="p-8 flex flex-col items-center">
-      <h1 className="text-2xl font-semibold mb-4">{crew ? crew.name : "Crew"}</h1>
+    <>
+      <div className="px-6 pt-4">
+        <div className="w-full max-w-md mb-2">
+          <Link href="/" className="text-sm text-zinc-600 hover:text-zinc-900 font-medium"><span aria-hidden="true">←</span>&nbsp;Back</Link>
+        </div>
+      </div>
+
+      <div className="p-8 flex flex-col items-center">
+        <h1 className="text-2xl font-semibold mb-4">{crew ? crew.name : "Crew"}</h1>
 
       <div className="bg-white p-6 rounded-lg shadow-sm border border-zinc-100 w-full max-w-3xl text-center">
         {!crew ? (
@@ -122,5 +129,6 @@ export default async function CrewPage() {
         )}
       </div>
     </div>
+    </>
   );
 }
