@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { Trash2 } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { Trash2, X } from "lucide-react";
 
 type Props = {
   open: boolean;
@@ -9,6 +9,8 @@ type Props = {
 };
 
 export default function HowToModal({ open, onClose }: Props) {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const scrollTimeout = useRef<number | null>(null);
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
@@ -23,16 +25,54 @@ export default function HowToModal({ open, onClose }: Props) {
     };
   }, [open, onClose]);
 
+  // Reveal the scrollbar thumb while the user is actively scrolling (wheel/trackpad)
+  useEffect(() => {
+    if (!open) return;
+    const el = scrollRef.current;
+    if (!el) return;
+
+    function onScroll() {
+      const target = scrollRef.current;
+      if (!target) return;
+      target.classList.add("scrolling");
+      if (scrollTimeout.current) window.clearTimeout(scrollTimeout.current);
+      scrollTimeout.current = window.setTimeout(() => {
+        const t = scrollRef.current;
+        if (t) t.classList.remove("scrolling");
+        scrollTimeout.current = null;
+      }, 700) as unknown as number;
+    }
+
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      if (scrollTimeout.current) window.clearTimeout(scrollTimeout.current);
+      scrollTimeout.current = null;
+    };
+  }, [open]);
+
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
 
-      <div className="relative max-w-3xl w-full bg-white rounded-lg shadow-lg border border-zinc-200 p-6">
-        <h2 className="text-lg font-semibold mb-4">How to use this tracker</h2>
+      <div className="relative max-w-3xl w-full bg-white rounded-lg shadow-lg border border-zinc-200">
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute top-3 right-3 inline-flex items-center justify-center rounded-md bg-white text-zinc-700 border border-zinc-200 p-1 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-200"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <div className="p-6 flex flex-col">
+          <h2 className="text-lg font-semibold mb-4">How to use this tracker</h2>
+          <hr className="border-t border-zinc-200 mb-4" />
 
-        <div className="flex flex-col gap-4 text-sm text-zinc-700">
+          {/* Make the central content scrollable when it grows too tall (3px thin scrollbar; auto-hide when idle) */}
+          <style>{`.howto-scroll { -ms-overflow-style: auto; scrollbar-width: thin; /* default hidden */ scrollbar-color: transparent transparent; direction: ltr; } .howto-scroll.scrolling { scrollbar-color: rgba(15,23,42,0.35) transparent; } .howto-scroll::-webkit-scrollbar { width: 1px; height: 1px; } .howto-scroll::-webkit-scrollbar-track { background: transparent; } .howto-scroll::-webkit-scrollbar-thumb { background-color: rgba(15,23,42,0.35); border-radius: 9999px; border: 1px solid rgba(255,255,255,0.06); opacity: 0; transition: opacity .18s ease; } .howto-scroll.scrolling::-webkit-scrollbar-thumb { opacity: 1; }`}</style>
+          <div ref={scrollRef} className="overflow-auto max-h-[65vh] howto-scroll">
+            <div className="flex flex-col gap-4 text-sm text-zinc-700 pr-4">
           {/* Compartment: ETO — Leave */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
             <div>
@@ -282,16 +322,11 @@ export default function HowToModal({ open, onClose }: Props) {
               </div>
             </div>
           </div>
+          </div>
+        </div>
         </div>
 
-        <div className="mt-6 flex justify-end">
-          <button
-            onClick={onClose}
-            className="inline-flex items-center justify-center rounded-md bg-white text-zinc-700 border border-zinc-200 px-4 py-2 text-sm font-medium hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-200"
-          >
-            Close
-          </button>
-        </div>
+        
       </div>
     </div>
   );
