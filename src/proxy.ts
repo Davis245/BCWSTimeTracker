@@ -8,7 +8,7 @@ export async function proxy(request: any) {
   }
   const session = await auth(request);
   if (!session?.user?.id) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL("/landing", request.url));
   }
   return NextResponse.next();
 }
