@@ -293,12 +293,6 @@ export default function HowToModal({ open, onClose }: Props) {
             </div>
             <div>
               <h3 className="font-medium">How to record CTO leave</h3>
-              <div className="mt-2">
-                - Select the date (e.g., Mar 22).
-                <br />- Choose "CTO" and set the length.
-                <br />- Optionally add a note and submit.
-                <br />- CTO used will be deducted from CTO balance.
-              </div>
 
               {/* Exact calendar date-card copy (hard-coded day 1) */}
               <div className="mt-3">
@@ -367,11 +361,47 @@ export default function HowToModal({ open, onClose }: Props) {
                     </div>
                   </div>
                 </div>
+
+                {/* Equals row centered - styled like the plus button */}
+                <div className="mt-2 flex justify-center">
+                  <div className="flex items-center justify-center">
+                    <button aria-label="Equals" className="w-10 h-10 rounded-md bg-white text-zinc-600 flex items-center justify-center hover:bg-zinc-50 text-lg font-semibold">
+                      =
+                    </button>
+                  </div>
+                </div>
+
+                {/* New row inside this div: centered duplicate of the left calendar-style card */}
+                <div className="mt-3 flex justify-center">
+                  <div className="rounded-lg overflow-hidden border border-zinc-200 shadow-sm" style={{ width: 144, aspectRatio: "2 / 3" }}>
+                    <div style={{ backgroundColor: "#fff", border: "1px solid #e5e7eb", display: "flex", flexDirection: "column", alignItems: "flex-start", padding: "0.5rem", boxSizing: "border-box", height: "100%" }}>
+                      <span style={{ fontSize: "1rem", fontWeight: 400, color: "#374151" }}>1</span>
+
+                      <div style={{ display: "flex", gap: 4, marginTop: 8, width: "100%" }}>
+                        <div style={{ flex: 1, background: "#f1f5f9", borderRadius: 6, padding: "2px 0", textAlign: "center", marginRight: 2, border: "1px solid #e5e7eb", transition: "background 0.2s", height: "36px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                          <div style={{ fontSize: 10, fontWeight: 600, color: "#0f172a", letterSpacing: 1 }}>ETO</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{"--"}</div>
+                        </div>
+                        <div style={{ flex: 1, background: "#fecaca", borderRadius: 6, padding: "2px 0", textAlign: "center", marginLeft: 2, border: "1px solid #e5e7eb", transition: "background 0.2s", height: "36px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                          <div style={{ fontSize: 10, fontWeight: 600, color: "#0f172a", letterSpacing: 1 }}>CTO</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{"-7"}</div>
+                        </div>
+                      </div>
+
+                      <div style={{ flex: 1 }} />
+
+                      <button style={{ marginTop: "auto", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 6, padding: "4px 0", cursor: "pointer", color: "#64748b", fontSize: 14, fontWeight: 500, gap: 6, outline: "none" }} aria-label="Edit day">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ marginRight: 4 }}>
+                          <path d="M12 20h9" />
+                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-
-          
 
           <hr className="border-t border-zinc-200" />
 
