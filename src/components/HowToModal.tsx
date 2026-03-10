@@ -74,7 +74,7 @@ export default function HowToModal({ open, onClose }: Props) {
           <div ref={scrollRef} className="overflow-auto max-h-[65vh] howto-scroll">
             <div className="flex flex-col gap-4 text-sm text-zinc-700 pr-4">
           {/* Compartment: ETO — Leave */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
             <div>
               <h3 className="font-medium">ETO — Leave</h3>
               <div className="mt-2 rounded-lg overflow-hidden border border-zinc-200 shadow-sm">
@@ -141,11 +141,119 @@ export default function HowToModal({ open, onClose }: Props) {
             </div>
             <div>
               <h3 className="font-medium">How to record ETO leave</h3>
-              <div className="mt-2">
-                - Open the calendar and click the date (e.g., Mar 15).
-                <br />- Choose "ETO" and select duration (half day/full day).
-                <br />- Add a short note explaining reason.
-                <br />- Save; the summary card will update.
+
+              {/* Duplicate of the CTO how-to/example (label + cards) */}
+              <div className="mt-3">
+                <div className="flex items-center gap-3">
+                  {/* Left: labeled calendar-style card */}
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="text-sm text-zinc-500 text-center">7 Hours of ETO Used</div>
+                    <div className="rounded-lg overflow-hidden border border-zinc-200 shadow-sm" style={{ width: 144, aspectRatio: "2 / 3" }}>
+                      <div style={{ backgroundColor: "#fff", border: "1px solid #e5e7eb", display: "flex", flexDirection: "column", alignItems: "flex-start", padding: "0.5rem", boxSizing: "border-box", height: "100%" }}>
+                        <span style={{ fontSize: "1rem", fontWeight: 400, color: "#374151" }}>1</span>
+
+                        <div style={{ display: "flex", gap: 4, marginTop: 8, width: "100%" }}>
+                          <div style={{ flex: 1, background: "#fecaca", borderRadius: 6, padding: "2px 0", textAlign: "center", marginRight: 2, border: "1px solid #e5e7eb", transition: "background 0.2s", height: "36px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                              <div style={{ fontSize: 10, fontWeight: 600, color: "#0f172a", letterSpacing: 1 }}>ETO</div>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{"-7"}</div>
+                            </div>
+                            <div style={{ flex: 1, background: "#f1f5f9", borderRadius: 6, padding: "2px 0", textAlign: "center", marginLeft: 2, border: "1px solid #e5e7eb", transition: "background 0.2s", height: "36px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                              <div style={{ fontSize: 10, fontWeight: 600, color: "#0f172a", letterSpacing: 1 }}>CTO</div>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{"--"}</div>
+                            </div>
+                        </div>
+
+                        <div style={{ flex: 1 }} />
+
+                        <button style={{ marginTop: "auto", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 6, padding: "4px 0", cursor: "pointer", color: "#64748b", fontSize: 14, fontWeight: 500, gap: 6, outline: "none" }} aria-label="Edit day">
+                          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ marginRight: 4 }}>
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Center: plus button */}
+                  <div className="flex items-center justify-center">
+                    <button aria-label="Add" className="w-10 h-10 rounded-md bg-white text-zinc-600 flex items-center justify-center hover:bg-zinc-50">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 5v14"></path>
+                        <path d="M5 12h14"></path>
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* Right: labeled neutral card */}
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="text-sm text-zinc-500 text-center">No ETO is Earned</div>
+                    <div className="rounded-lg overflow-hidden border border-zinc-200 shadow-sm" style={{ width: 144, aspectRatio: "2 / 3" }}>
+                      <div style={{ backgroundColor: "#fff", border: "1px solid #e5e7eb", display: "flex", flexDirection: "column", alignItems: "flex-start", padding: "0.5rem", boxSizing: "border-box", height: "100%" }}>
+                        <span style={{ fontSize: "1rem", fontWeight: 400, color: "#374151" }}>1</span>
+
+                        <div style={{ display: "flex", gap: 4, marginTop: 8, width: "100%" }}>
+                          <div style={{ flex: 1, background: "#f1f5f9", borderRadius: 6, padding: "2px 0", textAlign: "center", marginRight: 2, border: "1px solid #e5e7eb", transition: "background 0.2s", height: "36px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                            <div style={{ fontSize: 10, fontWeight: 600, color: "#0f172a", letterSpacing: 1 }}>ETO</div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{"0"}</div>
+                          </div>
+                          <div style={{ flex: 1, background: "#f1f5f9", borderRadius: 6, padding: "2px 0", textAlign: "center", marginLeft: 2, border: "1px solid #e5e7eb", transition: "background 0.2s", height: "36px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                            <div style={{ fontSize: 10, fontWeight: 600, color: "#0f172a", letterSpacing: 1 }}>CTO</div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{"--"}</div>
+                          </div>
+                        </div>
+
+                        <div style={{ flex: 1 }} />
+
+                        <button style={{ marginTop: "auto", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 6, padding: "4px 0", cursor: "pointer", color: "#64748b", fontSize: 14, fontWeight: 500, gap: 6, outline: "none" }} aria-label="Edit day">
+                          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ marginRight: 4 }}>
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Equals row centered - styled like the plus button */}
+                <div className="mt-2 flex justify-center">
+                  <div className="flex items-center justify-center">
+                    <button aria-label="Equals" className="w-10 h-10 rounded-md bg-white text-zinc-600 flex items-center justify-center hover:bg-zinc-50 text-lg font-semibold">
+                      =
+                    </button>
+                  </div>
+                </div>
+
+                {/* New row inside this div: centered duplicate of the left calendar-style card */}
+                {/* Label above the duplicate card + spacing */}
+                <div className="mt-3 flex flex-col items-center gap-2">
+                  <div className="rounded-lg overflow-hidden border border-zinc-200 shadow-sm" style={{ width: 144, aspectRatio: "2 / 3" }}>
+                    <div style={{ backgroundColor: "#fff", border: "1px solid #e5e7eb", display: "flex", flexDirection: "column", alignItems: "flex-start", padding: "0.5rem", boxSizing: "border-box", height: "100%" }}>
+                      <span style={{ fontSize: "1rem", fontWeight: 400, color: "#374151" }}>1</span>
+
+                      <div style={{ display: "flex", gap: 4, marginTop: 8, width: "100%" }}>
+                        <div style={{ flex: 1, background: "#fecaca", borderRadius: 6, padding: "2px 0", textAlign: "center", marginRight: 2, border: "1px solid #e5e7eb", transition: "background 0.2s", height: "36px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                          <div style={{ fontSize: 10, fontWeight: 600, color: "#0f172a", letterSpacing: 1 }}>ETO</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{"-7"}</div>
+                        </div>
+                        <div style={{ flex: 1, background: "#f1f5f9", borderRadius: 6, padding: "2px 0", textAlign: "center", marginLeft: 2, border: "1px solid #e5e7eb", transition: "background 0.2s", height: "36px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                          <div style={{ fontSize: 10, fontWeight: 600, color: "#0f172a", letterSpacing: 1 }}>CTO</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{"--"}</div>
+                        </div>
+                      </div>
+
+                      <div style={{ flex: 1 }} />
+
+                      <button style={{ marginTop: "auto", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 6, padding: "4px 0", cursor: "pointer", color: "#64748b", fontSize: 14, fontWeight: 500, gap: 6, outline: "none" }} aria-label="Edit day">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ marginRight: 4 }}>
+                          <path d="M12 20h9" />
+                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
