@@ -89,7 +89,7 @@ export default function CrewPageClient() {
             <div className="overflow-x-auto">
               <table className="w-full text-left table-auto">
                 <thead>
-                  <tr className="text-sm text-zinc-500">
+                  <tr className="text-sm text-zinc-500 border-b border-zinc-200">
                     <th className="px-4 py-2">Name</th>
                     <th className="px-4 py-2 text-center">ETO</th>
                     <th className="px-4 py-2 text-center">Last updated</th>
@@ -99,7 +99,7 @@ export default function CrewPageClient() {
                 </thead>
                 <tbody>
                   {members.map((m) => (
-                    <tr key={m.id} className="align-middle">
+                    <tr key={m.id} className="align-middle border-b border-zinc-200">
                       <td className="px-4 py-3 font-medium">{m.firstName} {m.lastName}</td>
                       <td className="px-4 py-3 font-medium text-center">{m.etoTotal}</td>
                       <td className="px-4 py-3 text-zinc-600 text-center">{m.etoLast ?? "--"}</td>
