@@ -542,7 +542,7 @@ function CalendarContent() {
             {editCtoError && <div style={{ fontSize: 12, color: "#ef4444", marginBottom: 8 }}>{editCtoError}</div>}
             <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
               <button onClick={closeModal} style={{ padding: "8px 18px", borderRadius: 6, border: "1px solid #d1d5db", background: "#f3f4f6", color: "#374151", fontWeight: 500, cursor: "pointer" }}>Cancel</button>
-              <button onClick={handleSave} style={{ padding: "8px 18px", borderRadius: 6, border: "none", background: "#2563eb", color: "#fff", fontWeight: 600, cursor: "pointer" }}>Save</button>
+              <button onClick={handleSave} disabled={editEtoError !== null || editCtoError !== null || (editEto === "" && editCto === "")} style={{ padding: "8px 18px", borderRadius: 6, border: "none", background: (editEtoError !== null || editCtoError !== null || (editEto === "" && editCto === "")) ? "#d1d5db" : "#2563eb", color: (editEtoError !== null || editCtoError !== null || (editEto === "" && editCto === "")) ? "#9ca3af" : "#fff", fontWeight: 600, cursor: (editEtoError !== null || editCtoError !== null || (editEto === "" && editCto === "")) ? "not-allowed" : "pointer", opacity: (editEtoError !== null || editCtoError !== null || (editEto === "" && editCto === "")) ? 0.6 : 1 }}>Save</button>
             </div>
           </div>
         </div>
