@@ -19,6 +19,14 @@ export default function CrewPageClient() {
   const [members, setMembers] = useState<Member[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  const getEtoBackgroundColor = (value: number | string): string => {
+    const num = typeof value === "number" ? value : parseFloat(value as string);
+    if (isNaN(num)) return "bg-white";
+    if (num < 0 || num > 70) return "bg-red-200";
+    if (num >= 41) return "bg-yellow-200";
+    return "bg-green-200";
+  };
+
   useEffect(() => {
     let mounted = true;
     async function fetchCrew() {
@@ -101,7 +109,7 @@ export default function CrewPageClient() {
                   {members.map((m) => (
                     <tr key={m.id} className="align-middle border-b border-zinc-200">
                       <td className="px-4 py-3 font-medium">{m.firstName} {m.lastName}</td>
-                      <td className="px-4 py-3 font-medium text-center">{m.etoTotal}</td>
+                      <td className="px-4 py-3 font-medium text-center"><span className={`inline-flex items-center justify-center w-16 px-3 py-1 rounded ${getEtoBackgroundColor(m.etoTotal)}`}>{m.etoTotal}</span></td>
                       <td className="px-4 py-3 text-zinc-600 text-center">{m.etoLast ?? "--"}</td>
                       {/* <td className="px-4 py-3 font-medium text-center">{m.ctoTotal}</td>
                       <td className="px-4 py-3 text-zinc-600 text-center">{m.ctoLast ?? "--"}</td> */}
