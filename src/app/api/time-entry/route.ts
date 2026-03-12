@@ -21,7 +21,27 @@ const timeEntrySchema = z.object({
     (val) => val === undefined || !isNaN(Date.parse(val)),
     { message: "Invalid savedAt date format" }
   ),
-});
+}).refine(
+  (data) => {
+    // ETO earned: max 1.5 hours
+    if (data.type === "ETO" && data.direction === "EARNED" && data.hours > 1.5) {
+      return false;
+    }
+    // ETO used: min -7 hours (i.e., max 7 hours can be used)
+    if (data.type === "ETO" && data.direction === "USED" && data.hours > 7) {
+      return false;
+    }
+    // CTO used: min -7 hours (i.e., max 7 hours can be used)
+    if (data.type === "CTO" && data.direction === "USED" && data.hours > 7) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: "Invalid input",
+    path: ["hours"],
+  }
+);
 
 export async function POST(request: Request) {
   try {
@@ -37,7 +57,10 @@ export async function POST(request: Request) {
     }
     const parseResult = timeEntrySchema.safeParse(body);
     if (!parseResult.success) {
-      return NextResponse.json({ error: parseResult.error.flatten() }, { status: 400 });
+      // Extract error message from the first field error
+      const flattened = parseResult.error.flatten();
+      const errorMessage = flattened.fieldErrors.hours?.[0] || "Invalid input";
+      return NextResponse.json({ error: errorMessage }, { status: 400 });
     }
     const { date, type, direction, hours, notes, savedAt } = parseResult.data;
     const entry = await createTimeEntry({
