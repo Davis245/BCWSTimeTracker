@@ -55,6 +55,8 @@ function CalendarContent() {
   const [editDay, setEditDay] = useState<number | null>(null);
   const [editEto, setEditEto] = useState("");
   const [editCto, setEditCto] = useState("");
+  const [editEtoError, setEditEtoError] = useState<string | null>(null);
+  const [editCtoError, setEditCtoError] = useState<string | null>(null);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -177,6 +179,8 @@ function CalendarContent() {
     setEditDay(day);
     setEditEto("");
     setEditCto("");
+    setEditEtoError(null);
+    setEditCtoError(null);
     setModalOpen(true);
   }
 
@@ -185,6 +189,48 @@ function CalendarContent() {
     setEditDay(null);
     setEditEto("");
     setEditCto("");
+    setEditEtoError(null);
+    setEditCtoError(null);
+  }
+
+  function validateEtoInput(value: string) {
+    if (value === "") {
+      setEditEtoError(null);
+      return true;
+    }
+    const num = parseFloat(value);
+    if (isNaN(num)) {
+      setEditEtoError("Must be a number");
+      return false;
+    }
+    if (num < -7) {
+      setEditEtoError("Cannot use more than 7 hours of ETO");
+      return false;
+    }
+    if (num > 1.5) {
+      setEditEtoError("Cannot earn more than 1.5 hours of ETO");
+      return false;
+    }
+    setEditEtoError(null);
+    return true;
+  }
+
+  function validateCtoInput(value: string) {
+    if (value === "") {
+      setEditCtoError(null);
+      return true;
+    }
+    const num = parseFloat(value);
+    if (isNaN(num)) {
+      setEditCtoError("Must be a number");
+      return false;
+    }
+    if (num < -7) {
+      setEditCtoError("Cannot use more than 7 hours of CTO");
+      return false;
+    }
+    setEditCtoError(null);
+    return true;
   }
 
   async function handleSave() {
@@ -416,10 +462,14 @@ function CalendarContent() {
             <input
               type="text"
               value={editEto}
-              onChange={e => setEditEto(e.target.value)}
-              style={{ padding: 8, borderRadius: 6, border: "1px solid #d1d5db", marginBottom: 8 }}
+              onChange={e => {
+                setEditEto(e.target.value);
+                validateEtoInput(e.target.value);
+              }}
+              style={{ padding: 8, borderRadius: 6, border: editEtoError ? "1px solid #ef4444" : "1px solid #d1d5db", marginBottom: 4 }}
               placeholder="Enter ETO value"
             />
+            {editEtoError && <div style={{ fontSize: 12, color: "#ef4444", marginBottom: 8 }}>{editEtoError}</div>}
             <label style={{ fontSize: 14, fontWeight: 500, marginBottom: 0 }}>CTO:</label>
             {/* CTO entries for this date */}
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8, marginBottom: 8 }}>
@@ -482,10 +532,14 @@ function CalendarContent() {
             <input
               type="text"
               value={editCto}
-              onChange={e => setEditCto(e.target.value)}
-              style={{ padding: 8, borderRadius: 6, border: "1px solid #d1d5db", marginBottom: 16 }}
+              onChange={e => {
+                setEditCto(e.target.value);
+                validateCtoInput(e.target.value);
+              }}
+              style={{ padding: 8, borderRadius: 6, border: editCtoError ? "1px solid #ef4444" : "1px solid #d1d5db", marginBottom: 4 }}
               placeholder="Enter CTO value"
             />
+            {editCtoError && <div style={{ fontSize: 12, color: "#ef4444", marginBottom: 8 }}>{editCtoError}</div>}
             <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
               <button onClick={closeModal} style={{ padding: "8px 18px", borderRadius: 6, border: "1px solid #d1d5db", background: "#f3f4f6", color: "#374151", fontWeight: 500, cursor: "pointer" }}>Cancel</button>
               <button onClick={handleSave} style={{ padding: "8px 18px", borderRadius: 6, border: "none", background: "#2563eb", color: "#fff", fontWeight: 600, cursor: "pointer" }}>Save</button>
