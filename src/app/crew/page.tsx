@@ -93,8 +93,8 @@ export default function CrewPageClient() {
                     <th className="px-4 py-2">Name</th>
                     <th className="px-4 py-2 text-center">ETO</th>
                     <th className="px-4 py-2 text-center">Last updated</th>
-                    <th className="px-4 py-2 text-center">CTO</th>
-                    <th className="px-4 py-2 text-center">Last updated</th>
+                    {/* <th className="px-4 py-2 text-center">CTO</th>
+                    <th className="px-4 py-2 text-center">Last updated</th> */}
                   </tr>
                 </thead>
                 <tbody>
@@ -103,8 +103,8 @@ export default function CrewPageClient() {
                       <td className="px-4 py-3 font-medium">{m.firstName} {m.lastName}</td>
                       <td className="px-4 py-3 font-medium text-center">{m.etoTotal}</td>
                       <td className="px-4 py-3 text-zinc-600 text-center">{m.etoLast ?? "--"}</td>
-                      <td className="px-4 py-3 font-medium text-center">{m.ctoTotal}</td>
-                      <td className="px-4 py-3 text-zinc-600 text-center">{m.ctoLast ?? "--"}</td>
+                      {/* <td className="px-4 py-3 font-medium text-center">{m.ctoTotal}</td>
+                      <td className="px-4 py-3 text-zinc-600 text-center">{m.ctoLast ?? "--"}</td> */}
                     </tr>
                   ))}
                 </tbody>
