@@ -645,6 +645,8 @@ function CalendarContent() {
               const ctoVal = dayTotals[key]?.CTO ?? 0;
               const hasEto = !!dayTotals[key]?.hasEto;
               const hasCto = !!dayTotals[key]?.hasCto;
+              const dayOfWeek = new Date(year, month, day).getDay();
+              const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 0 = Sunday, 6 = Saturday
               return (
                 <div
                   key={day}
@@ -667,90 +669,94 @@ function CalendarContent() {
                   >
                     {day}
                   </span>
-                  {/* ETO/CTO cards */}
-                  <div style={{ display: "flex", gap: 4, marginTop: 4, width: "100%" }}>
-                    <div
-                      style={{
-                          flex: 1,
-                          background:
-                            etoVal > 0
-                              ? "#bbf7d0" // green-200
-                              : etoVal < 0
-                              ? "#fecaca" // red-200
-                              : "#f1f5f9",
-                          borderRadius: 6,
-                          padding: "2px 0",
-                          textAlign: "center",
-                          marginRight: 2,
-                          border: "1px solid #e5e7eb",
-                          transition: "background 0.2s",
-                          height: "36px",
-                          display: "flex",
-                          flexDirection: "column",
-                          justifyContent: "center",
-                        }}
-                    >
-                      <div style={{ fontSize: 10, fontWeight: 600, color: "#0f172a", letterSpacing: 1 }}>ETO</div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
-                        {hasEto ? etoVal : "--"}
+                  {/* ETO/CTO cards - hidden on weekends */}
+                  {!isWeekend && (
+                    <div style={{ display: "flex", gap: 4, marginTop: 4, width: "100%" }}>
+                      <div
+                        style={{
+                            flex: 1,
+                            background:
+                              etoVal > 0
+                                ? "#bbf7d0" // green-200
+                                : etoVal < 0
+                                ? "#fecaca" // red-200
+                                : "#f1f5f9",
+                            borderRadius: 6,
+                            padding: "2px 0",
+                            textAlign: "center",
+                            marginRight: 2,
+                            border: "1px solid #e5e7eb",
+                            transition: "background 0.2s",
+                            height: "36px",
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "center",
+                          }}
+                      >
+                        <div style={{ fontSize: 10, fontWeight: 600, color: "#0f172a", letterSpacing: 1 }}>ETO</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
+                          {hasEto ? etoVal : "--"}
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                            flex: 1,
+                            background:
+                              ctoVal > 0
+                                ? "#bbf7d0"
+                                : ctoVal < 0
+                                ? "#fecaca"
+                                : "#f1f5f9",
+                            borderRadius: 6,
+                            padding: "2px 0",
+                            textAlign: "center",
+                            marginLeft: 2,
+                            border: "1px solid #e5e7eb",
+                            transition: "background 0.2s",
+                            height: "36px",
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "center",
+                          }}
+                      >
+                        <div style={{ fontSize: 10, fontWeight: 600, color: "#0f172a", letterSpacing: 1 }}>CTO</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
+                          {hasCto ? ctoVal : "--"}
+                        </div>
                       </div>
                     </div>
-                    <div
-                      style={{
-                          flex: 1,
-                          background:
-                            ctoVal > 0
-                              ? "#bbf7d0"
-                              : ctoVal < 0
-                              ? "#fecaca"
-                              : "#f1f5f9",
-                          borderRadius: 6,
-                          padding: "2px 0",
-                          textAlign: "center",
-                          marginLeft: 2,
-                          border: "1px solid #e5e7eb",
-                          transition: "background 0.2s",
-                          height: "36px",
-                          display: "flex",
-                          flexDirection: "column",
-                          justifyContent: "center",
-                        }}
-                    >
-                      <div style={{ fontSize: 10, fontWeight: 600, color: "#0f172a", letterSpacing: 1 }}>CTO</div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
-                        {hasCto ? ctoVal : "--"}
-                      </div>
-                    </div>
-                  </div>
+                  )}
                   {/* Spacer to push button to bottom */}
                   <div style={{ flex: 1 }} />
-                  {/* Edit button at bottom */}
-                  <button
-                    style={{
-                        marginTop: "auto",
-                        width: "100%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        background: "#f3f4f6",
-                        border: "1px solid #e5e7eb",
-                        borderRadius: 6,
-                        padding: "4px 0",
-                        cursor: "pointer",
-                        color: "#64748b",
-                        fontSize: 14,
-                        fontWeight: 500,
-                        gap: 6,
-                        outline: "none"
-                      }}
-                    aria-label="Edit day"
-                    onClick={() => openEditModal(day)}
-                  >
-                    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ marginRight: 4 }}>
-                      <path d="M12 20h9" />
-                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-                    </svg>
-                  </button>
+                  {/* Edit button at bottom - hidden on weekends */}
+                  {!isWeekend && (
+                    <button
+                      style={{
+                          marginTop: "auto",
+                          width: "100%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          background: "#f3f4f6",
+                          border: "1px solid #e5e7eb",
+                          borderRadius: 6,
+                          padding: "4px 0",
+                          cursor: "pointer",
+                          color: "#64748b",
+                          fontSize: 14,
+                          fontWeight: 500,
+                          gap: 6,
+                          outline: "none"
+                        }}
+                      aria-label="Edit day"
+                      onClick={() => openEditModal(day)}
+                    >
+                      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ marginRight: 4 }}>
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                      </svg>
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -770,11 +776,13 @@ function CalendarContent() {
           {(() => {
             const d = selectedDate;
             const day = d.getDate();
+            const dayOfWeek = d.getDay();
+            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
             const totals = getTotalsForDate(d);
             return (
               <div style={{ ...cellStyle, backgroundColor: "#fff", border: "1px solid #e5e7eb", display: "flex", flexDirection: "column", alignItems: "flex-start", width: 300, height: 400, maxWidth: "96vw", padding: "0.5rem", boxSizing: "border-box" }}>
-                {/* ETO/CTO small cards like in month view (no day label inside) */}
-                {/* square ETO/CTO mini-cards (match month-cell ratio) */}
+                {/* ETO/CTO small cards like in month view (no day label inside) - hidden on weekends */}
+                {!isWeekend && (
                 <div style={{ display: "flex", gap: 8, marginTop: 8, width: "100%", justifyContent: "center" }}>
                   <div
                     style={{
@@ -827,8 +835,11 @@ function CalendarContent() {
                     </div>
                   </div>
                 </div>
+                )}
                 {/* Spacer */}
                 <div style={{ flex: 1 }} />
+                {/* Edit button - hidden on weekends */}
+                {!isWeekend && (
                 <button
                   onClick={() => openEditModal(day)}
                   aria-label="Edit day"
@@ -856,6 +867,7 @@ function CalendarContent() {
                     <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
                   </svg>
                 </button>
+                )}
               </div>
             );
           })()}
