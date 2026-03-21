@@ -46,11 +46,11 @@ function formatTime(time: string): string {
 }
 
 function CalendarContent() {
-  const today = new Date();
+  const [today, setToday] = useState<Date | null>(null);
   const [isSingleDayView, setIsSingleDayView] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date>(today);
-  const [year, setYear] = useState(today.getFullYear());
-  const [month, setMonth] = useState(today.getMonth()); // 0-indexed
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [year, setYear] = useState(0);
+  const [month, setMonth] = useState(0); // 0-indexed
   const [modalOpen, setModalOpen] = useState(false);
   const [editDay, setEditDay] = useState<number | null>(null);
   const [editEto, setEditEto] = useState("");
@@ -65,6 +65,15 @@ function CalendarContent() {
   const { refreshKey } = useTimeEntryRefresh();
   const { triggerRefresh } = useTimeEntryRefresh();
   const { showToast } = useToast();
+
+  // Initialize today's date on client mount (ensures correct timezone)
+  useEffect(() => {
+    const currentDate = new Date();
+    setToday(currentDate);
+    setSelectedDate(currentDate);
+    setYear(currentDate.getFullYear());
+    setMonth(currentDate.getMonth());
+  }, []);
 
   // Fetch entries for the current month
   useEffect(() => {
@@ -132,6 +141,7 @@ function CalendarContent() {
   }
 
   function prevDay() {
+    if (!selectedDate) return;
     const d = new Date(selectedDate);
     d.setDate(d.getDate() - 1);
     setSelectedDate(d);
@@ -140,6 +150,7 @@ function CalendarContent() {
   }
 
   function nextDay() {
+    if (!selectedDate) return;
     const d = new Date(selectedDate);
     d.setDate(d.getDate() + 1);
     setSelectedDate(d);
@@ -148,6 +159,7 @@ function CalendarContent() {
   }
 
   const isToday = (day: number) =>
+    today !== null &&
     day === today.getDate() &&
     month === today.getMonth() &&
     year === today.getFullYear();
@@ -357,7 +369,7 @@ function CalendarContent() {
   }
 
   // If in single-day view use selectedDate for header label
-  const headerDateLabel = isSingleDayView
+  const headerDateLabel = isSingleDayView && selectedDate
     ? `${DAY_NAMES[selectedDate.getDay()]}, ${MONTH_NAMES[selectedDate.getMonth()]} ${selectedDate.getDate()}, ${selectedDate.getFullYear()}`
     : `${MONTH_NAMES[month]} ${year}`;
 
@@ -584,7 +596,7 @@ function CalendarContent() {
         <button onClick={isSingleDayView ? prevDay : prevMonth} style={navBtnStyle} aria-label="Previous">
           ‹
         </button>
-        {isSingleDayView ? (
+        {isSingleDayView && selectedDate ? (
           <div style={{ textAlign: "center", color: "#111827" }}>
             <div style={{ fontSize: "0.95rem", fontWeight: 600 }}>{DAY_NAMES[selectedDate.getDay()]}</div>
             <div style={{ fontSize: "1.1rem", fontWeight: 600 }}>{`${MONTH_NAMES[selectedDate.getMonth()]} ${selectedDate.getDate()}, ${selectedDate.getFullYear()}`}</div>
@@ -773,7 +785,7 @@ function CalendarContent() {
   // Single-day compact view styled like a calendar day cell
   <div style={{ backgroundColor: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: "0.5rem", overflow: "hidden", display: "flex", justifyContent: "center", padding: "0.75rem" }}>
           {/* Single day card (looks like one of the day cells) */}
-          {(() => {
+          {selectedDate && (() => {
             const d = selectedDate;
             const day = d.getDate();
             const dayOfWeek = d.getDay();
