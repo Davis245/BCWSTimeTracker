@@ -15,6 +15,7 @@ datasource db {
 model Crew {
   id         String   @id @default(uuid())
   name       String   @unique
+  crewCode   String?  @unique
   fireCentre String?
 
   users      User[]
