@@ -29,7 +29,9 @@ export default function RegisterPage() {
     } else {
       try {
         const data = await res.json();
-        setError(data.error || "Registration failed");
+        // Handle error - ensure it's a string
+        const errorMsg = typeof data.error === 'string' ? data.error : "Registration failed";
+        setError(errorMsg);
       } catch {
         setError("Registration failed: Unexpected server response");
       }
@@ -43,7 +45,7 @@ export default function RegisterPage() {
         <form className="flex flex-col gap-4 w-full" onSubmit={handleRegister}>
           <input name="firstName" type="text" placeholder="First Name" required className="border rounded px-3 py-2 w-full" />
           <input name="lastName" type="text" placeholder="Last Name" required className="border rounded px-3 py-2 w-full" />
-          <input name="crew" type="text" placeholder="Crew Name" required className="border rounded px-3 py-2 w-full" />
+          <input name="crew" type="text" placeholder="Crew Code (optional)" className="border rounded px-3 py-2 w-full" />
           <input name="email" type="email" placeholder="Email" required className="border rounded px-3 py-2 w-full" />
           <input name="password" type="password" placeholder="Password" required className="border rounded px-3 py-2 w-full" />
           <button type="submit" className="bg-blue-600 text-white rounded px-4 py-2 font-semibold hover:bg-blue-700 transition">Register</button>

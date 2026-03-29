@@ -89,7 +89,13 @@ export default function CrewPageClient() {
         ) : error ? (
           <div className="text-zinc-600">{error}</div>
         ) : !crew ? (
-          <div className="text-zinc-600">You are not assigned to a crew.</div>
+          <div className="flex flex-col items-center gap-4">
+            <div className="text-zinc-600 text-lg">You are not part of a crew</div>
+            <div className="text-sm text-zinc-500">To join a crew, go to your profile and enter your crew code.</div>
+            <Link href="/profile/edit" className="mt-2 inline-flex items-center gap-2 rounded-md bg-blue-600 text-white px-4 py-2 font-medium hover:bg-blue-700 transition">
+              Go to Profile
+            </Link>
+          </div>
         ) : (
           <div>
             {crew.fireCentre && <div className="text-sm text-zinc-500 mb-4">{crew.fireCentre}</div>}

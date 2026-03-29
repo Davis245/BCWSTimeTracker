@@ -32,8 +32,8 @@ model User {
   hashedPassword String?
   position   String?
 
-  crewId     String
-  crew       Crew     @relation(fields: [crewId], references: [id], onDelete: Restrict)
+  crewId     String?
+  crew       Crew?    @relation(fields: [crewId], references: [id], onDelete: SetNull)
 
   timeEntries TimeEntry[]
 
