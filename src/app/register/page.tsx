@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import bcrypt from "bcryptjs";
+import Link from "next/link";
 
 export default function RegisterPage() {
   const [error, setError] = useState("");
@@ -29,7 +29,9 @@ export default function RegisterPage() {
     } else {
       try {
         const data = await res.json();
-        setError(data.error || "Registration failed");
+        // Handle error - ensure it's a string
+        const errorMsg = typeof data.error === 'string' ? data.error : "Registration failed";
+        setError(errorMsg);
       } catch {
         setError("Registration failed: Unexpected server response");
       }
@@ -37,19 +39,43 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen bg-zinc-100">
-      <div className="bg-white rounded-xl shadow p-8 flex flex-col items-center gap-6 border border-zinc-200 w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-2">Register</h1>
-        <form className="flex flex-col gap-4 w-full" onSubmit={handleRegister}>
-          <input name="firstName" type="text" placeholder="First Name" required className="border rounded px-3 py-2 w-full" />
-          <input name="lastName" type="text" placeholder="Last Name" required className="border rounded px-3 py-2 w-full" />
-          <input name="crew" type="text" placeholder="Crew Name" required className="border rounded px-3 py-2 w-full" />
-          <input name="email" type="email" placeholder="Email" required className="border rounded px-3 py-2 w-full" />
-          <input name="password" type="password" placeholder="Password" required className="border rounded px-3 py-2 w-full" />
-          <button type="submit" className="bg-blue-600 text-white rounded px-4 py-2 font-semibold hover:bg-blue-700 transition">Register</button>
-        </form>
-        {error && <div className="text-red-600 text-sm mt-2">{error}</div>}
+    <>
+      <div className="px-6 pt-4">
+        <div className="w-full max-w-md mb-2">
+          <Link href="/" className="text-sm text-zinc-600 hover:text-zinc-900 font-medium"><span aria-hidden="true">←</span>&nbsp;Back</Link>
+        </div>
       </div>
-    </main>
+
+      <div className="p-8 flex flex-col items-center">
+        <h1 className="text-2xl font-semibold mb-4 text-center">Register</h1>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-zinc-100 w-full max-w-md">
+          <form className="flex flex-col gap-4" onSubmit={handleRegister}>
+            <div>
+              <label className="text-xs text-zinc-500">First Name</label>
+              <input name="firstName" type="text" placeholder="First Name" required className="w-full rounded border px-3 py-2 mt-1" />
+            </div>
+            <div>
+              <label className="text-xs text-zinc-500">Last Name</label>
+              <input name="lastName" type="text" placeholder="Last Name" required className="w-full rounded border px-3 py-2 mt-1" />
+            </div>
+            <div>
+              <label className="text-xs text-zinc-500">Crew Code (optional)</label>
+              <input name="crew" type="text" placeholder="Crew Code (optional)" className="w-full rounded border px-3 py-2 mt-1" />
+            </div>
+            <div>
+              <label className="text-xs text-zinc-500">Email</label>
+              <input name="email" type="email" placeholder="Email" required className="w-full rounded border px-3 py-2 mt-1" />
+            </div>
+            <div>
+              <label className="text-xs text-zinc-500">Password</label>
+              <input name="password" type="password" placeholder="Password" required className="w-full rounded border px-3 py-2 mt-1" />
+            </div>
+            {error && <div className="text-sm text-red-600 mt-2">{error}</div>}
+            <button type="submit" className="mt-4 inline-flex justify-center items-center gap-2 rounded-md bg-white text-zinc-700 border border-zinc-200 px-4 py-2 font-medium hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-200">Register</button>
+          </form>
+        </div>
+      </div>
+    </>
   );
 }

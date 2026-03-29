@@ -17,14 +17,14 @@ export default async function EditProfilePage() {
   const firstName = dbUser?.firstName ?? "";
   const lastName = dbUser?.lastName ?? "";
   const email = dbUser?.email ?? session.user.email ?? "";
-  const crewName = dbUser?.crew?.name ?? "";
+  const crewCode = dbUser?.crew?.crewCode ?? "";
 
   return (
     <div className="p-8 flex flex-col items-center">
       <h1 className="text-2xl font-semibold mb-4 text-center">Edit Profile</h1>
 
       <div className="bg-white p-6 rounded-lg shadow-sm border border-zinc-100 w-full max-w-md">
-        <ProfileEditForm firstName={firstName} lastName={lastName} email={email} crew={crewName} />
+        <ProfileEditForm firstName={firstName} lastName={lastName} email={email} crew={crewCode} />
       </div>
     </div>
   );

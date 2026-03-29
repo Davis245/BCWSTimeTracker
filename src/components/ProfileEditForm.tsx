@@ -70,7 +70,7 @@ export default function ProfileEditForm({ firstName, lastName, email, crew }: Pr
         <label className="text-xs text-zinc-500">Email</label>
         <input className="w-full rounded border px-3 py-2" value={emailVal} onChange={(e) => setEmailVal(e.target.value)} />
 
-        <label className="text-xs text-zinc-500">Crew</label>
+        <label className="text-xs text-zinc-500">Crew Code</label>
         <input className="w-full rounded border px-3 py-2" value={crewVal} onChange={(e) => setCrewVal(e.target.value)} />
       </div>
 

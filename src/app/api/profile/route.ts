@@ -7,7 +7,7 @@ const profileUpdateSchema = z.object({
   firstName: z.string().min(0).optional(),
   lastName: z.string().min(0).optional(),
   email: z.string().email().optional(),
-  crew: z.string().min(1).optional(),
+  crew: z.string().optional().nullable(),
 });
 
 export async function PATCH(request: Request) {
@@ -29,26 +29,35 @@ export async function PATCH(request: Request) {
     }
     const { firstName, lastName, email, crew } = parse.data;
 
-    // handle crew: if provided, upsert crew by name
-    let crewId: string | undefined = undefined;
-    if (crew) {
-      const existing = await prisma.crew.findUnique({ where: { name: crew } });
-      if (existing) {
-        crewId = existing.id;
+    // handle crew: if provided and not empty, validate crew exists by crewCode
+    let crewId: string | null | undefined = undefined;
+    if (crew !== undefined) {
+      if (crew && crew.trim()) {
+        // User provided a crew code - validate it
+        const existingCrew = await prisma.crew.findUnique({ where: { crewCode: crew } });
+        if (!existingCrew) {
+          return NextResponse.json({ error: "Invalid crew code" }, { status: 400 });
+        }
+        crewId = existingCrew.id;
       } else {
-        const createdCrew = await prisma.crew.create({ data: { name: crew } });
-        crewId = createdCrew.id;
+        // User cleared the crew code - set crewId to null
+        crewId = null;
       }
+    }
+
+    const updateData: any = {
+      firstName: typeof firstName === "string" ? firstName : undefined,
+      lastName: typeof lastName === "string" ? lastName : undefined,
+      email: typeof email === "string" ? email : undefined,
+    };
+    
+    if (crewId !== undefined) {
+      updateData.crewId = crewId;
     }
 
     const updated = await prisma.user.update({
       where: { id: session.user.id },
-      data: {
-        firstName: typeof firstName === "string" ? firstName : undefined,
-        lastName: typeof lastName === "string" ? lastName : undefined,
-        email: typeof email === "string" ? email : undefined,
-        crewId: crewId ?? undefined,
-      },
+      data: updateData,
     });
 
     return NextResponse.json({ user: updated }, { status: 200 });
@@ -73,7 +82,7 @@ export async function GET(request: Request) {
     const firstName = dbUser.firstName ?? "";
     const lastName = dbUser.lastName ?? "";
     const email = dbUser.email ?? session.user.email ?? "";
-    const crew = dbUser.crew ? { id: dbUser.crew.id, name: dbUser.crew.name } : null;
+    const crew = dbUser.crew ? { id: dbUser.crew.id, crewCode: dbUser.crew.crewCode, name: dbUser.crew.name } : null;
 
     return NextResponse.json({ user: { firstName, lastName, email, crew } });
   } catch (err) {
