@@ -82,7 +82,7 @@ export async function GET(request: Request) {
     const firstName = dbUser.firstName ?? "";
     const lastName = dbUser.lastName ?? "";
     const email = dbUser.email ?? session.user.email ?? "";
-    const crew = dbUser.crew ? { id: dbUser.crew.id, crewCode: dbUser.crew.crewCode } : null;
+    const crew = dbUser.crew ? { id: dbUser.crew.id, crewCode: dbUser.crew.crewCode, name: dbUser.crew.name } : null;
 
     return NextResponse.json({ user: { firstName, lastName, email, crew } });
   } catch (err) {

@@ -9,7 +9,7 @@ type ProfileUser = {
   firstName: string;
   lastName: string;
   email: string;
-  crew: { id: string; name: string } | null;
+  crew: { id: string; crewCode: string | null; name: string } | null;
 };
 
 export default function ProfilePageClient() {
